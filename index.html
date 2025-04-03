@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    // Add Firebase to your project (paste this in <head> of index.html)
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js"></script>
+        
+        <script>
+        // Your Firebase config (from Project Settings)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Now you can save players to Firestore
+        function addPlayer() {
+            const name = document.getElementById("playerName").value;
+            const price = document.getElementById("playerPrice").value;
+            
+            db.collection("players").add({
+                name: name,
+                price: price
+            }).then(() => {
+                alert("Player added!");
+            });
+        }
+        
+        // Fetch players in real-time
+        db.collection("players").onSnapshot((snapshot) => {
+            const playerList = document.getElementById("playerList");
+            playerList.innerHTML = "<h3>Players List</h3>";
+            
+            snapshot.forEach((doc) => {
+                const player = doc.data();
+                playerList.innerHTML += `
+                    <div class="player-card">
+                        <h2>${player.name}</h2>
+                        <p>Base Price: ₹${player.price} Crore</p>
+                        <button onclick="placeBid('${doc.id}')">Bid Now</button>
+                    </div>
+                `;
+            });
+        });
+        
+        function placeBid(playerId) {
+            const bidAmount = prompt("Enter your bid amount:");
+            if (bidAmount) {
+                db.collection("bids").add({
+                    playerId: playerId,
+                    amount: bidAmount,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+        </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Auction 2024</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>🏏 IPL Auction 2024 🏏</h1>
+    <!-- Add this below </h1> -->
+<div class="admin-panel">
+    <h2>Admin Panel</h2>
+    <input type="text" id="playerName" placeholder="Player Name">
+    <input type="number" id="playerPrice" placeholder="Base Price">
+    <button onclick="addPlayer()">Add Player</button>
+</div>
+
+<!-- Display players -->
+<div id="playerList"></div>
+    <div class="player-card">
+        <img src="https://via.placeholder.com/150" alt="Player">
+        <h2>Virat Kohli</h2>
+        <p>Base Price: ₹2 Crore</p>
+        <button onclick="placeBid()">Bid Now</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
