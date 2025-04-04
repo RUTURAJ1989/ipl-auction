@@ -290,14 +290,14 @@
         let teams = [];
 
         // Check auth state
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // Show admin link if user is authenticated
-                adminLink.classList.remove('d-none');
-            }
-            // Initialize auction regardless of auth state
-            initAuction();
-        });
+      auth.onAuthStateChanged(user => {
+    // Only show admin link if user is authenticated
+    if (user) {
+        adminLink.classList.remove('d-none');
+    }
+    // Always initialize auction regardless of auth state
+    initAuction();
+});
 
         // Initialize auction
         function initAuction() {

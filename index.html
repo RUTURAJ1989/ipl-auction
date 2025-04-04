@@ -116,15 +116,19 @@
         const auth = firebase.auth();
 
         // Check authentication state
-        auth.onAuthStateChanged(user => {
-            if (!user) {
-                window.location.href = "bidding.html"; // Redirect to bidding page if not logged in
-            } else {
-                // Load data only if authenticated
-                loadTeams();
-                loadPlayers();
-            }
-        });
+        // Update the auth state handler in index.html
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        // Only redirect if we're not already on the login page
+        if (!window.location.pathname.endsWith('login.html')) {
+            window.location.href = "login.html"; // Redirect to login page instead
+        }
+    } else {
+        // User is authenticated, load admin panel
+        loadTeams();
+        loadPlayers();
+    }
+});
 
         // Logout function
         document.getElementById('logoutBtn').addEventListener('click', () => {
