@@ -1,128 +1,166 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+/* Base Styles */
+:root {
+    --primary: #0d6efd;
+    --success: #198754;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --dark: #212529;
+}
 
 body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #1a1a2e, #16213e);
     color: white;
     margin: 0;
-    padding: 20px;
+    min-height: 100vh;
 }
 
-h1 {
-    color: #f9c80e; /* IPL Gold */
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f0f8ff;
-    padding: 20px;
-}
-
-h1 {
-    color: #e63946;
-}
-
-.player-card {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px auto;
-    width: 200px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-button {
-    background: #e63946;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #d62828;
-}
-.player-card {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 15px;
-    width: 220px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: inline-block;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.player-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-}
-
-.player-card img {
-    width: 100%;
-    border-radius: 10px;
-    margin-bottom: 10px;
-}
-
-.player-card h2 {
-    color: #f9c80e;
-    margin: 10px 0;
-}
-
-.player-card p {
-    color: #ddd;
-    margin: 5px 0;
-}
-
-button {
-    background: #e63946;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-weight: bold;
+/* Admin Panel Styles */
+.logo-preview {
+    max-width: 100px;
+    max-height: 100px;
     margin-top: 10px;
 }
 
-button:hover {
-    background: #ff2d4a;
-}
-.teams-section {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 15px;
-    border-radius: 10px;
-    margin: 20px 0;
+.nav-pills .nav-link.active {
+    background-color: var(--primary);
 }
 
-.team-budget {
+.csv-upload {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.admin-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin: 10px 0;
+    margin-bottom: 20px;
 }
 
-.team-budget img {
+.team-logo-small {
     width: 40px;
-    margin-right: 10px;
+    height: 40px;
+    object-fit: contain;
 }
 
-.auction-status {
-    background: rgba(249, 200, 46, 0.2);
-    padding: 15px;
-    border-radius: 10px;
-    margin: 20px 0;
-    border: 1px solid #f9c80e;
+.player-img-small {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
 }
-/* Fade-in animation for player cards */
+
+/* Auction Styles */
+.auction-container {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    border: 3px solid var(--warning);
+    box-shadow: 0 0 30px rgba(255, 193, 7, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.player-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.player-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    border-color: var(--warning);
+}
+
+.bid-button {
+    background: linear-gradient(45deg, #ffc107, #ff9800);
+    border: none;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.bid-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+}
+
+.countdown {
+    font-size: 3rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+}
+
+.team-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    transition: all 0.3s;
+}
+
+.team-logo:hover {
+    transform: scale(1.1);
+}
+
+.bid-history-item {
+    border-left: 3px solid var(--warning);
+    transition: all 0.3s;
+}
+
+.bid-history-item:hover {
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+.sold-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+/* Hammer animation */
+.hammer {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    font-size: 2rem;
+    animation: hammerSwing 2s infinite;
+    transform-origin: top right;
+}
+
+@keyframes hammerSwing {
+    0%, 100% { transform: translateY(-50%) rotate(45deg); }
+    50% { transform: translateY(-50%) rotate(-15deg); }
+}
+
+/* Admin link */
+.admin-link {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+/* Leading bidder highlight */
+.leading-bidder {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid var(--warning);
+}
+
+/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -132,62 +170,19 @@ button:hover {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Pulse effect for bid button */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-button:hover {
-    animation: pulse 1s infinite;
-}
+/* Responsive styles */
 @media (max-width: 768px) {
     .player-card {
         width: 100%;
         margin: 10px 0;
     }
 
-    h1 {
-        font-size: 1.8rem;
+    .countdown {
+        font-size: 2rem;
     }
 
-    .teams-section, .auction-status {
-        padding: 10px;
+    .team-logo {
+        width: 40px;
+        height: 40px;
     }
 }
-.auction-live {
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 20px 0;
-    border: 2px solid #f9c80e;
-  }
-  
-  .current-player {
-    text-align: center;
-  }
-  
-  .current-player h3 {
-    color: #f9c80e;
-    font-size: 1.8rem;
-    margin: 10px 0;
-  }
-  
-  .current-player p {
-    font-size: 1.2rem;
-    margin: 8px 0;
-  }
-  
-  .current-player button {
-    background: #f9c80e;
-    color: #000;
-    font-weight: bold;
-    padding: 12px 25px;
-    font-size: 1.1rem;
-    margin-top: 15px;
-  }
-  
-  .current-player button:hover {
-    background: #ffdf5e;
-  }
