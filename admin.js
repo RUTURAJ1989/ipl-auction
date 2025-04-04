@@ -1,4 +1,37 @@
 // Initialize Firebase (same as script.js)
+// In admin.js, update the initAdmin function:
+async function initAdmin() {
+    try {
+        // Verify admin status
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+        
+        const token = await user.getIdTokenResult();
+        if (!token.claims.admin) {
+            alert('You do not have admin privileges');
+            auth.signOut();
+            return;
+        }
+        
+        // Initialize everything
+        initFirestoreListeners();
+        loadUnsoldPlayers();
+        setupEventListeners();
+        monitorAuctionState();
+        
+        // Load initial data
+        await Promise.all([
+            loadTeams(),
+            loadPlayers()
+        ]);
+    } catch (error) {
+        console.error('Admin initialization error:', error);
+        alert('Error initializing admin panel');
+    }
+}
 
 // DOM Elements
 const playerSelect = document.getElementById('playerSelect');
@@ -145,3 +178,155 @@ function adjustTimer(seconds) {
 
 // Initialize when page loads
 window.addEventListener('load', initAdmin);
+// Initialize Firestore listeners
+function initFirestoreListeners() {
+    // Team form submission
+    document.getElementById('teamForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await addTeam();
+    });
+
+    // Player form submission
+    document.getElementById('playerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await addPlayer();
+    });
+}
+
+// Add a new team
+async function addTeam() {
+    const form = document.getElementById('teamForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const name = document.getElementById('teamName').value;
+    const code = document.getElementById('teamCode').value.toUpperCase();
+    const budget = parseFloat(document.getElementById('teamBudget').value);
+    const logoFile = document.getElementById('teamLogo').files[0];
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+        
+        // Validate inputs
+        if (!name || !code || isNaN(budget)) {
+            throw new Error('Please fill all required fields');
+        }
+        
+        if (code.length !== 3) {
+            throw new Error('Team code must be 3 characters');
+        }
+        
+        // Check if team code already exists
+        const existingTeam = await db.collection('teams').where('code', '==', code).get();
+        if (!existingTeam.empty) {
+            throw new Error('Team code already exists');
+        }
+
+        // Upload logo if provided
+        let logoUrl = 'https://via.placeholder.com/100';
+        if (logoFile) {
+            const storageRef = storage.ref(`team_logos/${code}_${Date.now()}`);
+            const snapshot = await storageRef.put(logoFile);
+            logoUrl = await snapshot.ref.getDownloadURL();
+        }
+        
+        // Add team to Firestore
+        await db.collection('teams').add({
+            name,
+            code,
+            budget,
+            logoUrl,
+            remainingBudget: budget,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Reset form
+        form.reset();
+        document.getElementById('logoPreview').src = 'https://via.placeholder.com/100';
+        
+        // Show success message
+        showAlert('Team added successfully!', 'success');
+    } catch (error) {
+        console.error('Error adding team:', error);
+        showAlert(error.message, 'danger');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Team';
+    }
+}
+
+// Add a new player
+async function addPlayer() {
+    const form = document.getElementById('playerForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const name = document.getElementById('playerName').value;
+    const role = document.getElementById('playerRole').value;
+    const price = parseFloat(document.getElementById('playerPrice').value);
+    const country = document.getElementById('playerCountry').value || 'India';
+    const imageFile = document.getElementById('playerImage').files[0];
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+        
+        // Validate inputs
+        if (!name || !role || isNaN(price)) {
+            throw new Error('Please fill all required fields');
+        }
+        
+        if (price < 0.2 || price > 20) {
+            throw new Error('Price must be between 0.2 and 20 Cr');
+        }
+
+        // Upload image if provided
+        let imageUrl = 'https://via.placeholder.com/150';
+        if (imageFile) {
+            const storageRef = storage.ref(`player_images/${name.replace(/\s+/g, '_')}_${Date.now()}`);
+            const snapshot = await storageRef.put(imageFile);
+            imageUrl = await snapshot.ref.getDownloadURL();
+        }
+        
+        // Add player to Firestore
+        await db.collection('players').add({
+            name,
+            role,
+            price,
+            country,
+            imageUrl,
+            status: 'unsold',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Reset form
+        form.reset();
+        document.getElementById('playerImagePreview').src = 'https://via.placeholder.com/100';
+        
+        // Show success message
+        showAlert('Player added successfully!', 'success');
+    } catch (error) {
+        console.error('Error adding player:', error);
+        showAlert(error.message, 'danger');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Player';
+    }
+}
+
+// Helper function to show alerts
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.tab-content');
+    container.prepend(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => alertDiv.remove(), 150);
+    }, 5000);
+}

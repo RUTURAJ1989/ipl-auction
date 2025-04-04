@@ -29,19 +29,24 @@
                         <img src="https://www.iplt20.com/assets/images/ipl-logo-new-old.png" alt="IPL Logo" style="height: 60px">
                         <h2 class="mt-3">Admin Login</h2>
                     </div>
-                    <form id="loginForm">
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <a href="bidding.html" class="text-white">Go to Live Bidding</a>
+                   <!-- Update the login form to include proper error handling -->
+<form id="loginForm">
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" required>
+        <div id="emailError" class="invalid-feedback"></div>
+    </div>
+    <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" required>
+        <div id="passwordError" class="invalid-feedback"></div>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">
+        <span id="loginSpinner" class="spinner-border spinner-border-sm d-none"></span>
+        Login
+    </button>
+    <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+</form>
                     </div>
                 </div>
             </div>
