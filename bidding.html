@@ -114,9 +114,24 @@
             0%, 100% { transform: translateY(-50%) rotate(45deg); }
             50% { transform: translateY(-50%) rotate(-15deg); }
         }
+
+        /* Admin link */
+        .admin-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
+    <!-- Admin Link (visible only to authenticated users) -->
+    <div id="adminLink" class="admin-link d-none">
+        <a href="index.html" class="btn btn-primary">
+            <i class="fas fa-cog me-2"></i> Admin Panel
+        </a>
+    </div>
+
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-10">
@@ -146,22 +161,22 @@
                                     <span class="badge bg-success py-2 px-3 d-none" id="soldBadge">SOLD</span>
                                 </div>
                                 <div class="text-center">
-                                    <img id="currentPlayerImage" src="https://img1.hscicdn.com/image/upload/f_auto,t_ds_square_w_320,q_50/lsci/db/PICTURES/CMS/319900/319946.png" 
+                                    <img id="currentPlayerImage" src="https://via.placeholder.com/150" 
                                          class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #ffc107">
-                                    <h2 id="currentPlayerName" class="fw-bold">Virat Kohli</h2>
+                                    <h2 id="currentPlayerName" class="fw-bold">Player Name</h2>
                                     <div class="d-flex justify-content-center mb-3">
-                                        <span id="playerRole" class="badge bg-info me-2">Batsman</span>
-                                        <span id="playerCountry" class="badge bg-secondary">India</span>
+                                        <span id="playerRole" class="badge bg-info me-2">Role</span>
+                                        <span id="playerCountry" class="badge bg-secondary">Country</span>
                                     </div>
                                     <div class="bg-dark p-3 rounded-3">
                                         <div class="row">
                                             <div class="col-6">
                                                 <small class="text-muted">Base Price</small>
-                                                <h4 class="fw-bold">₹<span id="basePrice">2.00</span> Cr</h4>
+                                                <h4 class="fw-bold">₹<span id="basePrice">0.00</span> Cr</h4>
                                             </div>
                                             <div class="col-6">
                                                 <small class="text-muted">Current Bid</small>
-                                                <h4 class="fw-bold text-warning">₹<span id="currentBid">5.20</span> Cr</h4>
+                                                <h4 class="fw-bold text-warning">₹<span id="currentBid">0.00</span> Cr</h4>
                                             </div>
                                         </div>
                                     </div>
@@ -171,12 +186,12 @@
                             <!-- Countdown Timer -->
                             <div class="text-center mb-4">
                                 <h5 class="mb-2">TIME REMAINING</h5>
-                                <div id="countdown" class="countdown text-danger">30</div>
+                                <div id="countdown" class="countdown text-danger">--</div>
                             </div>
                             
                             <!-- Bid Controls -->
                             <div class="text-center">
-                                <button id="bidButton" class="btn bid-button btn-lg px-5 py-3 mb-3 animate__animated animate__pulse animate__infinite">
+                                <button id="bidButton" class="btn bid-button btn-lg px-5 py-3 mb-3">
                                     <i class="fas fa-hand-paper me-2"></i> PLACE BID
                                 </button>
                                 <div class="d-flex justify-content-center">
@@ -196,11 +211,8 @@
                                 <div class="text-center mb-4 p-3 rounded-3" style="background: rgba(255, 193, 7, 0.1); border: 1px solid var(--warning)">
                                     <h5 class="text-warning">CURRENT LEADER</h5>
                                     <div id="leadingTeam" class="d-flex justify-content-center align-items-center">
-                                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/Royal_Challengers_Bangalore_2020.svg/1200px-Royal_Challengers_Bangalore_2020.svg.png" 
-                                             class="team-logo me-3">
                                         <div class="text-start">
-                                            <h4 class="mb-0 fw-bold">RCB</h4>
-                                            <small class="text-muted">₹<span id="leadingTeamBudget">42.50</span> Cr left</small>
+                                            <h4 class="mb-0 fw-bold">No bids yet</h4>
                                         </div>
                                     </div>
                                 </div>
@@ -215,13 +227,6 @@
                                     <h5 class="text-center mb-3">BID HISTORY</h5>
                                     <div id="bidHistory" style="max-height: 200px; overflow-y: auto;">
                                         <!-- Bid history items will be added here -->
-                                        <div class="bid-history-item p-2 mb-2 rounded-2">
-                                            <div class="d-flex justify-content-between">
-                                                <span class="fw-bold">RCB</span>
-                                                <span class="text-warning">₹5.20 Cr</span>
-                                            </div>
-                                            <small class="text-muted">2 seconds ago</small>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -244,6 +249,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     
@@ -263,6 +269,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const rtdb = firebase.database();
+        const auth = firebase.auth();
 
         // DOM Elements
         const bidButton = document.getElementById('bidButton');
@@ -274,12 +281,23 @@
         const upNextPlayers = document.getElementById('upNextPlayers');
         const auctionStatus = document.getElementById('auctionStatus');
         const soldBadge = document.getElementById('soldBadge');
+        const adminLink = document.getElementById('adminLink');
 
         // Auction state
         let currentPlayer = null;
         let timer = 30;
         let countdownInterval = null;
         let teams = [];
+
+        // Check auth state
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Show admin link if user is authenticated
+                adminLink.classList.remove('d-none');
+            }
+            // Initialize auction regardless of auth state
+            initAuction();
+        });
 
         // Initialize auction
         function initAuction() {
@@ -289,6 +307,14 @@
                 if (player) {
                     setCurrentPlayer(player);
                     startTimer();
+                } else {
+                    // No current player set
+                    auctionStatus.textContent = "Waiting for auction to start...";
+                    document.getElementById('currentPlayerName').textContent = "No player selected";
+                    document.getElementById('basePrice').textContent = "0.00";
+                    document.getElementById('currentBid').textContent = "0.00";
+                    countdownElement.textContent = "--";
+                    bidButton.disabled = true;
                 }
             });
 
@@ -343,6 +369,9 @@
             bidButton.classList.remove('btn-success');
             bidButton.classList.add('btn-warning');
             bidButton.innerHTML = '<i class="fas fa-hand-paper me-2"></i> PLACE BID';
+            
+            // Start pulse animation when player is set
+            bidButton.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
         }
 
         // Start the countdown timer
@@ -463,6 +492,7 @@
                     bidButton.classList.remove('btn-warning');
                     bidButton.classList.add('btn-success');
                     bidButton.innerHTML = '<i class="fas fa-check me-2"></i> SOLD';
+                    bidButton.classList.remove('animate__pulse', 'animate__infinite');
                     
                     // Animate
                     document.querySelector('.player-card').classList.add('animate__tada');
@@ -532,10 +562,9 @@
         }
 
         // Initialize the auction when page loads
-        window.addEventListener('load', initAuction);
+        window.addEventListener('load', () => {
+            // Initialize Firebase and check auth state will happen automatically
+        });
     </script>
 </body>
 </html>
-<!-- Add this to both index.html and bidding.html -->
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-
