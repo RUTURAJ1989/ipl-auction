@@ -2,21 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    color: white;
-    margin: 0;
-    padding: 20px;
-}
-
-h1 {
-    color: #f9c80e; /* IPL Gold */
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-body {
     font-family: Arial, sans-serif;
     text-align: center;
     background-color: #f0f8ff;
