@@ -254,23 +254,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     
     <script>
-        // Firebase configuration (same as admin panel)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
-            authDomain: "ipl-auction-f62cf.firebaseapp.com",
-            databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "ipl-auction-f62cf",
-            storageBucket: "ipl-auction-f62cf.appspot.com",
-            messagingSenderId: "1006195476972",
-            appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-        };
+       // In bidding.html, replace the Firebase initialization with:
+const firebaseConfig = {
+  apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
+  authDomain: "ipl-auction-f62cf.firebaseapp.com",
+  databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ipl-auction-f62cf",
+  storageBucket: "ipl-auction-f62cf.appspot.com",
+  messagingSenderId: "1006195476972",
+  appId: "1:1006195476972:web:6343541fb0007925ded8c9"
+};
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const rtdb = firebase.database();
-        const auth = firebase.auth();
-
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const rtdb = firebase.database(); // This was missing
+const auth = firebase.auth();
         // DOM Elements
         const bidButton = document.getElementById('bidButton');
         const countdownElement = document.getElementById('countdown');
