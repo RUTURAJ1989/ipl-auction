@@ -1,43 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <!-- Add inside <head> -->
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Auction 2024</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <h1>🏏 IPL Auction 2024 🏏</h1>
+    
+    <!-- Admin Panel -->
+    <div class="admin-panel">
+        <h2>Admin Panel</h2>
+        <input type="text" id="playerName" placeholder="Player Name">
+        <input type="number" id="playerPrice" placeholder="Base Price">
+        <button onclick="addPlayer()">Add Player</button>
+    </div>
 
-<!-- Add before </body> -->
-<script>
-  // Paste your Firebase config here
-  const firebaseConfig = {
-    apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
-  authDomain: "ipl-auction-f62cf.firebaseapp.com",
-  databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ipl-auction-f62cf",
-  storageBucket: "ipl-auction-f62cf.firebasestorage.app",
-  messagingSenderId: "1006195476972",
-  appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-  };
+    <!-- Players List -->
+    <div id="playerList"></div>
 
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-</script>
-<script src="script.js"></script>
-      
-            function addPlayer() {
+    <!-- Team Budgets Section -->
+    <div class="teams-section">
+        <h2>🏆 Team Budgets</h2>
+        <div class="team-budget">
+            <img src="https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/Royal_Challengers_Bangalore_2020.svg/1200px-Royal_Challengers_Bangalore_2020.svg.png" alt="RCB">
+            <p>RCB: ₹42.5 Cr Left</p>
+        </div>
+        <!-- Add more teams here -->
+    </div>
+
+    <!-- Auction Status -->
+    <div class="auction-live">
+        <h2>⚡ LIVE BIDDING</h2>
+        <div class="current-player">
+            <h3 id="currentPlayerName">Player Name</h3>
+            <p>Base Price: ₹2 Cr</p>
+            <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
+            <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
+            <button onclick="placeBid()">🚀 Place Bid</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
+            authDomain: "ipl-auction-f62cf.firebaseapp.com",
+            databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ipl-auction-f62cf",
+            storageBucket: "ipl-auction-f62cf.appspot.com",
+            messagingSenderId: "1006195476972",
+            appId: "1:1006195476972:web:6343541fb0007925ded8c9"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const db = firebase.firestore();
+
+        // Add player to Firestore
+        function addPlayer() {
             const name = document.getElementById("playerName").value;
             const price = document.getElementById("playerPrice").value;
             
-            db.collection("players").add({
-                name: name,
-                price: price
-            }).then(() => {
-                alert("Player added!");
-            });
+            if (name && price) {
+                db.collection("players").add({
+                    name: name,
+                    price: price,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert("Player added successfully!");
+                    document.getElementById("playerName").value = "";
+                    document.getElementById("playerPrice").value = "";
+                }).catch((error) => {
+                    console.error("Error adding player: ", error);
+                    alert("Error adding player. Please try again.");
+                });
+            } else {
+                alert("Please enter both player name and price!");
+            }
         }
         
         // Fetch players in real-time
-        db.collection("players").onSnapshot((snapshot) => {
+        db.collection("players").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
             const playerList = document.getElementById("playerList");
             playerList.innerHTML = "<h3>Players List</h3>";
             
@@ -45,6 +95,7 @@
                 const player = doc.data();
                 playerList.innerHTML += `
                     <div class="player-card">
+                        <img src="https://via.placeholder.com/150" alt="${player.name}">
                         <h2>${player.name}</h2>
                         <p>Base Price: ₹${player.price} Crore</p>
                         <button onclick="placeBid('${doc.id}')">Bid Now</button>
@@ -53,141 +104,45 @@
             });
         });
         
-        function placeBid(playerId) {
-            const bidAmount = prompt("Enter your bid amount:");
-            if (bidAmount) {
-                db.collection("bids").add({
-                    playerId: playerId,
-                    amount: bidAmount,
+        // Place a bid
+        function placeBid(playerId = null) {
+            const teamName = prompt("Enter your team name (e.g., RCB, MI, CSK):");
+            const bidAmount = prompt("Enter your bid amount (in Crores):");
+            
+            if (teamName && bidAmount) {
+                const bidData = {
+                    playerId: playerId || "defaultPlayer",
+                    team: teamName,
+                    amount: parseFloat(bidAmount),
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Update Realtime Database for live bidding
+                database.ref('auction/currentBid').set({
+                    amount: bidAmount,
+                    team: teamName
                 });
+                
+                // Also store in Firestore for permanent record
+                db.collection("bids").add(bidData)
+                    .then(() => {
+                        alert(`Bid of ₹${bidAmount} Cr placed by ${teamName}!`);
+                    })
+                    .catch((error) => {
+                        console.error("Error placing bid: ", error);
+                        alert("Error placing bid. Please try again.");
+                    });
             }
         }
-        </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPL Auction 2024</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <h1>🏏 IPL Auction 2024 🏏</h1>
-    <!-- Add this below </h1> -->
-<div class="admin-panel">
-    <h2>Admin Panel</h2>
-    <input type="text" id="playerName" placeholder="Player Name">
-    <input type="number" id="playerPrice" placeholder="Base Price">
-    <button onclick="addPlayer()">Add Player</button>
-</div>
 
-<!-- Display players -->
-<div id="playerList"></div>
-    <div class="player-card">
-        <img src="https://via.placeholder.com/150" alt="Player">
-        <h2>Virat Kohli</h2>
-        <p>Base Price: ₹2 Crore</p>
-        <button onclick="placeBid()">Bid Now</button>
-    </div>
-    <script src="script.js"></script>
+        // Listen for real-time bid updates
+        database.ref('auction/currentBid').on('value', (snapshot) => {
+            const bidData = snapshot.val();
+            if (bidData) {
+                document.getElementById("currentBid").textContent = `₹${bidData.amount} Cr`;
+                document.getElementById("highestBidder").textContent = bidData.team;
+            }
+        });
+    </script>
 </body>
 </html>
-<div class="player-card">
-    <img src="https://img1.hscicdn.com/image/upload/f_auto,t_ds_square_w_320,q_50/lsci/db/PICTURES/CMS/319900/319946.png" alt="Virat Kohli">
-    <h2>Virat Kohli</h2>
-    <p>🏏 Batsman | RCB</p>
-    <p>💰 Base Price: ₹2 Cr</p>
-    <p>🔥 Highest Bid: ₹5.2 Cr</p>
-    <button onclick="placeBid()">Bid Now</button>
-</div>
-<!-- Team Budgets Section -->
-<div class="teams-section">
-    <h2>🏆 Team Budgets</h2>
-    <div class="team-budget">
-        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/Royal_Challengers_Bangalore_2020.svg/1200px-Royal_Challengers_Bangalore_2020.svg.png" alt="RCB">
-        <p>RCB: ₹42.5 Cr Left</p>
-    </div>
-    <!-- Add more teams -->
-</div>
-
-<!-- Auction Status -->
-<<div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div><div class="auction-live">
-    <h2>⚡ LIVE BIDDING</h2>
-    <div class="current-player">
-      <h3 id="currentPlayerName">Player Name</h3>
-      <p>Base Price: ₹2 Cr</p>
-      <p>🏆 Highest Bid: <span id="currentBid">₹2.00 Cr</span></p>
-      <p>👑 Leading Team: <span id="highestBidder">No bids yet</span></p>
-      <button onclick="placeBid()">🚀 Place Bid</button>
-    </div>
-  </div>
