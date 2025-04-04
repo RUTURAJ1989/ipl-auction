@@ -1,6 +1,18 @@
+<!-- Add this near the top of your admin panel -->
+<div class="text-end mb-3">
+    <a href="bidding.html" class="btn btn-danger">
+        <i class="fas fa-tv me-2"></i> Go to Live Bidding
+    </a>
+</div>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add this near the header section -->
+<div class="text-end mb-3">
+    <a href="index.html" class="btn btn-primary">
+        <i class="fas fa-cog me-2"></i> Admin Panel
+    </a>
+</div>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPL Auction Admin Panel</title>
@@ -270,6 +282,35 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const storage = firebase.storage();
+        // Add after Firebase initialization
+const auth = firebase.auth();
+
+// Admin login function
+function adminLogin() {
+    const email = prompt("Enter admin email:");
+    const password = prompt("Enter password:");
+    
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            alert("Logged in as admin!");
+        })
+        .catch(error => {
+            console.error("Login error:", error);
+            alert("Invalid credentials!");
+        });
+}
+
+// Check auth state
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        window.location.href = "bidding.html"; // Redirect non-admins
+    }
+});
+
+// Logout button
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    auth.signOut();
+});
 
         // DOM Elements
         const teamForm = document.getElementById('teamForm');
@@ -558,3 +599,5 @@
     </script>
 </body>
 </html>
+<!-- Add this to both index.html and bidding.html -->
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
