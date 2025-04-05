@@ -106,14 +106,47 @@ function updateTeamBudgetsUI() {
 }
 
 // Place a bid (triggered by button click)
-function placeBid() {
-  if (!currentPlayer) return;
-  
-  const teamName = prompt("Enter your team code (e.g., RCB, MI, CSK):");
-  if (!teamName || !teams[teamName]) {
-    alert("Invalid team code!");
+// Proper bid button handler
+document.getElementById('bidButton').addEventListener('click', async () => {
+  if (!currentPlayer) {
+    showStatus("No player being auctioned", "warning");
     return;
   }
+
+  const team = prompt("Enter your team code (e.g., RCB, MI):");
+  if (!team || !teams[team]) {
+    showStatus("Invalid team code!", "danger");
+    return;
+  }
+
+  const currentBid = parseFloat(document.getElementById('currentBid').textContent);
+  const bidAmount = parseFloat(prompt(`Enter bid amount (current: ₹${currentBid.toFixed(2)} Cr):`));
+  
+  if (isNaN(bidAmount) || bidAmount <= currentBid) {
+    showStatus(`Bid must be higher than ₹${currentBid.toFixed(2)} Cr`, "warning");
+    return;
+  }
+
+  if (bidAmount > teams[team].remainingBudget) {
+    showStatus(`${team} doesn't have enough budget!`, "danger");
+    return;
+  }
+
+  try {
+    // Update bid in Realtime DB
+    await rtdb.ref('auction/currentBid').set({
+      team: team,
+      amount: bidAmount * 10000000,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    showStatus(`Bid of ₹${bidAmount.toFixed(2)} Cr placed by ${team}`, "success");
+    resetTimer();
+  } catch (error) {
+    console.error("Bid failed:", error);
+    showStatus("Failed to place bid", "danger");
+  }
+});
   
   const currentBidInCr = currentPlayer.highestBid / 10000000;
   const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
@@ -212,8 +245,7 @@ function updateTimerDisplay() {
 }
 
 // Sell player function
-function sellPlayer() {
-  if (!currentPlayer) return;
+firestore.collection('players').doc(currentPlayer.id).update({
   
   // Mark player as sold in Firestore
   firestore.collection('players').doc(currentPlayer.id).update({
