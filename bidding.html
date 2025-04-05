@@ -262,6 +262,15 @@
             100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
         }
         
+        /* Status alerts */
+        .status-alert {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1100;
+            max-width: 300px;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .ipl-logo {
@@ -281,10 +290,16 @@
 </head>
 <body>
     <!-- Admin Link (visible only to authenticated users) -->
-    <div id="adminLink" class="admin-link">
+    <div id="adminLink" class="admin-link d-none">
         <a href="index.html" class="btn btn-primary animate__animated animate__pulse animate__infinite">
             <i class="fas fa-cog me-2"></i> Admin Panel
         </a>
+    </div>
+
+    <!-- Status Alert -->
+    <div id="statusAlert" class="alert status-alert d-none">
+        <button type="button" class="btn-close float-end" onclick="this.parentElement.classList.add('d-none')"></button>
+        <span id="statusMessage"></span>
     </div>
 
     <div class="container py-4">
@@ -410,42 +425,395 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
     
     <script>
-        // Create confetti effect
-        function createConfetti() {
-            const container = document.getElementById('confettiContainer');
-            const colors = ['#fdb913', '#e63946', '#1a3e72', '#ffffff', '#198754'];
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
+            authDomain: "ipl-auction-f62cf.firebaseapp.com",
+            databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ipl-auction-f62cf",
+            storageBucket: "ipl-auction-f62cf.appspot.com",
+            messagingSenderId: "1006195476972",
+            appId: "1:1006195476972:web:6343541fb0007925ded8c9"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+        const auth = firebase.auth();
+
+        // Global variables
+        let teams = {};
+        let currentPlayer = null;
+        let unsubscribeTeams = null;
+        let unsubscribePlayers = null;
+        let timeLeft = 30;
+        let timerInterval = null;
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+            loadInitialData();
+            setupRealtimeListeners();
+            setupAuctionListeners();
+        });
+
+        // Authentication handler
+        function initAuth() {
+            auth.onAuthStateChanged(user => {
+                const adminLink = document.getElementById('adminLink');
+                if (user) {
+                    adminLink.classList.remove('d-none');
+                    console.log("User signed in:", user.email);
+                } else {
+                    adminLink.classList.add('d-none');
+                    console.log("No user signed in");
+                }
+            });
+        }
+
+        // Load initial data
+        async function loadInitialData() {
+            showStatus("Loading auction data...", "info");
             
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.width = (Math.random() * 10 + 5) + 'px';
-                confetti.style.height = (Math.random() * 10 + 5) + 'px';
-                confetti.style.animation = `float-up ${Math.random() * 2 + 1}s linear forwards`;
+            try {
+                // Load teams
+                const teamsSnapshot = await db.collection('teams').get();
+                teams = {};
+                teamsSnapshot.forEach(doc => {
+                    teams[doc.id] = doc.data();
+                    renderTeam(doc.data());
+                });
+                console.log(`Loaded ${teamsSnapshot.size} teams`);
+
+                // Load unsold players
+                const playersSnapshot = await db.collection('players')
+                    .where('status', '==', 'unsold')
+                    .orderBy('price', 'desc')
+                    .limit(5)
+                    .get();
                 
-                container.appendChild(confetti);
-                
-                // Remove confetti after animation
-                setTimeout(() => {
-                    confetti.remove();
-                }, 1000);
+                playersSnapshot.forEach(doc => {
+                    renderUpNextPlayer(doc.data());
+                });
+                console.log(`Loaded ${playersSnapshot.size} players`);
+
+                showStatus("Auction data loaded", "success");
+            } catch (error) {
+                console.error("Initial data load error:", error);
+                showStatus("Failed to load data. Check console.", "danger");
             }
         }
-        
-        // Play sound effect
-        function playSoundEffect(type) {
-            if (type === 'bid') {
-                // You would replace this with actual sound effects
-                console.log('Bid sound effect');
-            } else if (type === 'sold') {
-                createConfetti();
-                console.log('Sold sound effect');
+
+        // Setup real-time listeners
+        function setupRealtimeListeners() {
+            // Teams listener
+            unsubscribeTeams = db.collection('teams').onSnapshot(
+                snapshot => {
+                    teams = {};
+                    const container = document.getElementById('teamsContainer');
+                    container.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        teams[doc.id] = doc.data();
+                        renderTeam(doc.data());
+                    });
+                    console.log("Teams updated in real-time");
+                },
+                error => {
+                    console.error("Teams listener error:", error);
+                    showStatus("Teams update failed", "danger");
+                }
+            );
+
+            // Players listener
+            unsubscribePlayers = db.collection('players')
+                .where('status', '==', 'unsold')
+                .onSnapshot(
+                    snapshot => {
+                        const container = document.getElementById('upNextPlayers');
+                        container.innerHTML = '';
+                        
+                        snapshot.forEach(doc => {
+                            renderUpNextPlayer(doc.data());
+                        });
+                        console.log("Players updated in real-time");
+                    },
+                    error => {
+                        console.error("Players listener error:", error);
+                        showStatus("Players update failed", "danger");
+                    }
+                );
+        }
+
+        // Setup auction listeners
+        function setupAuctionListeners() {
+            // Current player listener
+            rtdb.ref('auction/currentPlayer').on('value', snapshot => {
+                const player = snapshot.val();
+                if (player) {
+                    setCurrentPlayer(player);
+                    startTimer();
+                } else {
+                    document.getElementById('currentPlayerName').textContent = "No player selected";
+                    document.getElementById('currentBid').textContent = "0.00";
+                    document.getElementById('countdownTimer').textContent = "--";
+                    document.getElementById('bidButton').disabled = true;
+                }
+            });
+
+            // Current bid listener
+            rtdb.ref('auction/currentBid').on('value', snapshot => {
+                const bid = snapshot.val();
+                if (bid) {
+                    updateBidDisplay(bid);
+                    addBidToHistory(bid);
+                }
+            });
+        }
+
+        // Set current player
+        function setCurrentPlayer(player) {
+            currentPlayer = player;
+            document.getElementById('currentPlayerName').textContent = player.name;
+            document.getElementById('currentPlayerImage').src = player.imageUrl || "https://via.placeholder.com/150";
+            document.getElementById('playerRole').textContent = player.role;
+            document.getElementById('playerCountry').textContent = player.country;
+            document.getElementById('basePrice').textContent = (player.basePrice / 10000000).toFixed(2);
+            document.getElementById('currentBid').textContent = (player.basePrice / 10000000).toFixed(2);
+            
+            // Reset UI
+            document.getElementById('soldBadge').classList.add('d-none');
+            document.getElementById('auctionStatus').textContent = "Auction in progress";
+            document.getElementById('bidButton').disabled = false;
+            document.getElementById('bidButton').classList.remove('btn-success');
+            document.getElementById('bidButton').classList.add('btn-warning');
+            document.getElementById('bidButton').innerHTML = '<i class="fas fa-hand-paper me-2"></i> PLACE BID';
+        }
+
+        // Update bid display
+        function updateBidDisplay(bid) {
+            const bidAmount = (bid.amount / 10000000).toFixed(2);
+            document.getElementById('currentBid').textContent = bidAmount;
+            
+            const biddingTeam = teams[bid.team];
+            if (biddingTeam) {
+                document.getElementById('leadingTeam').innerHTML = `
+                    <img src="${biddingTeam.logoUrl}" class="team-logo me-3">
+                    <div class="text-start">
+                        <h4 class="mb-0 fw-bold">${biddingTeam.name}</h4>
+                        <small class="text-muted">₹${(biddingTeam.remainingBudget - bid.amount / 10000000).toFixed(2)} Cr left</small>
+                    </div>
+                `;
+                document.getElementById('leadingBidAmount').textContent = `₹${bidAmount} Cr`;
             }
         }
+
+        // Add bid to history
+        function addBidToHistory(bid) {
+            const bidTime = new Date().toLocaleTimeString();
+            const bidItem = document.createElement('div');
+            bidItem.className = 'bid-history-item animate__animated animate__fadeIn';
+            bidItem.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <span class="fw-bold">${bid.team}</span>
+                    <span class="text-warning">₹${(bid.amount / 10000000).toFixed(2)} Cr</span>
+                </div>
+                <small class="text-muted">${bidTime}</small>
+            `;
+            document.getElementById('bidHistory').prepend(bidItem);
+            
+            // Limit history items
+            if (document.getElementById('bidHistory').children.length > 10) {
+                document.getElementById('bidHistory').lastChild.remove();
+            }
+        }
+
+        // Start timer
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 30;
+            document.getElementById('countdownTimer').textContent = timeLeft;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('countdownTimer').textContent = timeLeft;
+                
+                if (timeLeft <= 5) {
+                    document.getElementById('countdownTimer').classList.add('animate__animated', 'animate__heartBeat');
+                    setTimeout(() => {
+                        document.getElementById('countdownTimer').classList.remove('animate__animated', 'animate__heartBeat');
+                    }, 1000);
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    sellPlayer();
+                }
+            }, 1000);
+        }
+
+        // Sell player
+        function sellPlayer() {
+            rtdb.ref('auction/currentBid').once('value').then(snapshot => {
+                const bid = snapshot.val();
+                if (bid) {
+                    // Mark as sold in Firestore
+                    db.collection('players').doc(currentPlayer.id).update({
+                        status: 'sold',
+                        soldPrice: bid.amount,
+                        soldTo: bid.team
+                    }).then(() => {
+                        // Update UI
+                        document.getElementById('soldBadge').classList.remove('d-none');
+                        document.getElementById('auctionStatus').textContent = "Player sold!";
+                        document.getElementById('bidButton').disabled = true;
+                        document.getElementById('bidButton').classList.remove('btn-warning');
+                        document.getElementById('bidButton').classList.add('btn-success');
+                        document.getElementById('bidButton').innerHTML = '<i class="fas fa-check me-2"></i> SOLD';
+                        
+                        // Animate
+                        document.querySelector('.player-card').classList.add('animate__tada');
+                        setTimeout(() => {
+                            document.querySelector('.player-card').classList.remove('animate__tada');
+                        }, 1000);
+                        
+                        // Update team budget
+                        if (teams[bid.team]) {
+                            const newBudget = teams[bid.team].remainingBudget - (bid.amount / 10000000);
+                            db.collection('teams').doc(bid.team).update({
+                                remainingBudget: newBudget
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Place bid
+        document.getElementById('bidButton').addEventListener('click', () => {
+            if (!currentPlayer) return;
+            
+            const team = prompt("Enter your team code (e.g., RCB, MI):");
+            if (!team || !teams[team]) {
+                alert("Invalid team code!");
+                return;
+            }
+            
+            const currentBid = parseFloat(document.getElementById('currentBid').textContent);
+            const bidAmount = parseFloat(prompt(`Enter bid amount (current: ₹${currentBid.toFixed(2)} Cr):`));
+            
+            if (isNaN(bidAmount) || bidAmount <= currentBid) {
+                alert(`Bid must be higher than ₹${currentBid.toFixed(2)} Cr`);
+                return;
+            }
+            
+            if (bidAmount > teams[team].remainingBudget) {
+                alert(`${team} doesn't have enough budget!`);
+                return;
+            }
+            
+            // Update bid in Realtime DB
+            rtdb.ref('auction/currentBid').set({
+                team: team,
+                amount: bidAmount * 10000000,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            // Reset timer
+            timeLeft = 30;
+            document.getElementById('countdownTimer').textContent = timeLeft;
+        });
+
+        // Quick bid
+        function quickBid(increment) {
+            if (!currentPlayer) return;
+            
+            const currentBid = parseFloat(document.getElementById('currentBid').textContent);
+            const bidAmount = currentBid + increment;
+            
+            // Find team with highest remaining budget
+            let maxBudgetTeam = null;
+            let maxBudget = 0;
+            
+            for (const teamCode in teams) {
+                if (teams[teamCode].remainingBudget > maxBudget) {
+                    maxBudget = teams[teamCode].remainingBudget;
+                    maxBudgetTeam = teamCode;
+                }
+            }
+            
+            if (maxBudgetTeam && bidAmount <= maxBudget) {
+                rtdb.ref('auction/currentBid').set({
+                    team: maxBudgetTeam,
+                    amount: bidAmount * 10000000,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                timeLeft = 30;
+                document.getElementById('countdownTimer').textContent = timeLeft;
+            } else {
+                alert("No team has enough budget for this bid!");
+            }
+        }
+
+        // Render team
+        function renderTeam(team) {
+            const container = document.getElementById('teamsContainer');
+            const teamElement = document.createElement('div');
+            teamElement.className = 'col-6 mb-3';
+            teamElement.innerHTML = `
+                <div class="team-card p-3 rounded-3">
+                    <div class="d-flex align-items-center">
+                        <img src="${team.logoUrl}" class="team-logo me-3">
+                        <div>
+                            <h6 class="mb-1">${team.name}</h6>
+                            <small class="text-muted">₹${team.remainingBudget.toFixed(2)} Cr remaining</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(teamElement);
+        }
+
+        // Render upcoming player
+        function renderUpNextPlayer(player) {
+            const container = document.getElementById('upNextPlayers');
+            const playerElement = document.createElement('div');
+            playerElement.className = 'col-md-3 col-6 mb-3';
+            playerElement.innerHTML = `
+                <div class="player-card-small p-3 text-center">
+                    <img src="${player.imageUrl || 'https://via.placeholder.com/150'}" 
+                         class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+                    <h6 class="mb-1">${player.name}</h6>
+                    <small class="d-block mb-1">${player.role}</small>
+                    <small class="text-warning fw-bold">₹${player.price.toFixed(2)} Cr</small>
+                </div>
+            `;
+            container.appendChild(playerElement);
+        }
+
+        // Show status message
+        function showStatus(message, type = "info") {
+            const alert = document.getElementById('statusAlert');
+            const messageEl = document.getElementById('statusMessage');
+            
+            alert.className = `alert status-alert alert-${type}`;
+            messageEl.textContent = message;
+            alert.classList.remove('d-none');
+            
+            setTimeout(() => {
+                alert.classList.add('d-none');
+            }, 5000);
+        }
+
+        // Clean up when leaving page
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribeTeams) unsubscribeTeams();
+            if (unsubscribePlayers) unsubscribePlayers();
+            clearInterval(timerInterval);
+        });
     </script>
 </body>
 </html>
