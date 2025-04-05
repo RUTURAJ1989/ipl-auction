@@ -40,8 +40,8 @@ function startAuctionForPlayer(player) {
   };
   
   // Update Realtime DB
-  database.ref('auction/currentPlayer').set(currentPlayer);
-  database.ref('auction/currentBid').set({
+  rtdb.ref('auction/currentPlayer').set(currentPlayer);
+  rtdb.ref('auction/currentBid').set({
     highestBid: currentPlayer.highestBid,
     highestBidder: currentPlayer.highestBidder
   });
@@ -128,13 +128,13 @@ function placeBid() {
   // Check if bid is valid
   if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamName].remainingBudget) {
     // Update Firebase (real-time sync)
-    database.ref('auction/currentBid').set({
+    rtdb.ref('auction/currentBid').set({
       highestBid: bidAmount,
       highestBidder: teamName
     });
     
     // Add to bid history
-    const bidHistoryRef = database.ref('auction/bidHistory').push();
+    const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
     bidHistoryRef.set({
       team: teamName,
       amount: bidAmount,
@@ -156,13 +156,13 @@ function quickBid(increment) {
   const bidAmount = currentPlayer.highestBid + (increment * 10000000);
   const teamName = "SYS"; // System bid
   
-  database.ref('auction/currentBid').set({
+  rtdb.ref('auction/currentBid').set({
     highestBid: bidAmount,
     highestBidder: teamName
   });
   
   // Add to bid history
-  const bidHistoryRef = database.ref('auction/bidHistory').push();
+  const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
   bidHistoryRef.set({
     team: teamName,
     amount: bidAmount,
@@ -283,7 +283,7 @@ function loadNextPlayers() {
 }
 
 // Listen for real-time bid changes
-database.ref('auction/currentBid').on('value', (snapshot) => {
+rtdb.ref('auction/currentBid').on('value', (snapshot) => {
   const bidData = snapshot.val();
   if (bidData && currentPlayer) {
     currentPlayer.highestBid = bidData.highestBid;
@@ -293,7 +293,7 @@ database.ref('auction/currentBid').on('value', (snapshot) => {
 });
 
 // Listen for current player changes
-database.ref('auction/currentPlayer').on('value', (snapshot) => {
+rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
   const playerData = snapshot.val();
   if (playerData) {
     currentPlayer = playerData;
@@ -304,7 +304,7 @@ database.ref('auction/currentPlayer').on('value', (snapshot) => {
 
 // Load bid history
 function loadBidHistory() {
-  database.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
+  rtdb.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
     const bidHistoryContainer = document.getElementById("bidHistory");
     if (!bidHistoryContainer) return;
     
