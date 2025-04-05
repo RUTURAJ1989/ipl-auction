@@ -1,3 +1,5 @@
+// Add this at the top of your main JavaScript file
+console.log('Script loaded successfully');
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
@@ -18,6 +20,11 @@ const rtdb = firebase.database();
 let currentPlayer = null;
 let teams = {};
 
+// Add debug statements in your player selection handler
+function selectPlayer(player) {
+  console.log('Selected player:', player);
+  // rest of your code
+}
 // Function to start auction for a player
 function startAuctionForPlayer(player) {
   currentPlayer = {
