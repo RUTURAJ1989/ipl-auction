@@ -43,6 +43,8 @@
             position: relative;
             overflow: hidden;
             z-index: 1;
+            will-change: transform;
+            backface-visibility: hidden;
         }
         
         .player-card::before {
@@ -213,7 +215,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 1000;
+            z-index: 1050;
         }
         
         .ipl-logo {
@@ -267,7 +269,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 1100;
+            z-index: 1060;
             max-width: 300px;
             opacity: 0;
             transition: opacity 0.3s;
@@ -306,6 +308,12 @@
                 width: 40px;
                 height: 40px;
             }
+        }
+        
+        /* Disabled button styles */
+        .btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -446,7 +454,7 @@
     </div>
 
     <!-- Confetti container -->
-    <div id="confettiContainer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></div>
+    <div id="confettiContainer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1040;"></div>
 
     <!-- Firebase & Other JS -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -491,6 +499,8 @@
         let timerInterval = null;
         let unsubscribeTeams = null;
         let unsubscribePlayers = null;
+        let lastBidTime = 0;
+        const BID_COOLDOWN = 3000; // 3 seconds between bids
 
         // =====================
         // CORE FUNCTIONALITY
@@ -628,6 +638,7 @@
                     document.getElementById('currentBid').textContent = "0.00";
                     document.getElementById('countdownTimer').textContent = "--";
                     document.getElementById('bidButton').disabled = true;
+                    document.getElementById('auctionStatus').textContent = "No active auction";
                 }
             });
 
@@ -657,6 +668,11 @@
             document.getElementById('bidButton').classList.remove('btn-success');
             document.getElementById('bidButton').classList.add('btn-warning');
             document.getElementById('bidButtonText').innerHTML = '<i class="fas fa-hand-paper me-2"></i> PLACE BID';
+            
+            // Enable quick bid buttons
+            document.querySelectorAll('.btn-outline-warning').forEach(btn => {
+                btn.disabled = false;
+            });
         }
 
         function updateBidDisplay(bid) {
@@ -742,11 +758,19 @@
                         document.getElementById('bidButton').classList.add('btn-success');
                         document.getElementById('bidButtonText').innerHTML = '<i class="fas fa-check me-2"></i> SOLD';
                         
+                        // Disable quick bid buttons
+                        document.querySelectorAll('.btn-outline-warning').forEach(btn => {
+                            btn.disabled = true;
+                        });
+                        
                         // Animate
                         document.querySelector('.player-card').classList.add('animate__tada');
                         setTimeout(() => {
                             document.querySelector('.player-card').classList.remove('animate__tada');
                         }, 1000);
+                        
+                        // Create confetti effect
+                        createConfetti();
                         
                         // Update team budget
                         if (teams[bid.team]) {
@@ -774,22 +798,38 @@
         document.getElementById('bidButton').addEventListener('click', () => {
             if (!currentPlayer) return;
             
+            const now = Date.now();
+            if (now - lastBidTime < BID_COOLDOWN) {
+                const secondsLeft = Math.ceil((BID_COOLDOWN - (now - lastBidTime))/1000);
+                showStatus(`Please wait ${secondsLeft} second${secondsLeft > 1 ? 's' : ''} before bidding again`, "warning");
+                return;
+            }
+            lastBidTime = now;
+            
             const team = prompt("Enter your team code (e.g., RCB, MI):");
             if (!team || !teams[team]) {
-                alert("Invalid team code!");
+                showStatus("Invalid team code!", "danger");
                 return;
             }
             
             const currentBid = parseFloat(document.getElementById('currentBid').textContent);
-            const bidAmount = parseFloat(prompt(`Enter bid amount (current: ₹${currentBid.toFixed(2)} Cr):`));
+            let bidAmount = parseFloat(prompt(`Enter bid amount (current: ₹${currentBid.toFixed(2)} Cr):`));
             
-            if (isNaN(bidAmount) || bidAmount <= currentBid) {
-                alert(`Bid must be higher than ₹${currentBid.toFixed(2)} Cr`);
+            if (isNaN(bidAmount)) {
+                showStatus("Please enter a valid number", "danger");
+                return;
+            }
+            
+            // Round to nearest 0.25 crore
+            bidAmount = Math.round(bidAmount * 4) / 4;
+            
+            if (bidAmount <= currentBid) {
+                showStatus(`Bid must be higher than ₹${currentBid.toFixed(2)} Cr`, "danger");
                 return;
             }
             
             if (bidAmount > teams[team].remainingBudget) {
-                alert(`${team} doesn't have enough budget!`);
+                showStatus(`${team} doesn't have enough budget!`, "danger");
                 return;
             }
             
@@ -800,9 +840,21 @@
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
             
+            // Add to bid history
+            const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
+            bidHistoryRef.set({
+                team: team,
+                amount: bidAmount * 10000000,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                playerId: currentPlayer.id
+            });
+            
             // Reset timer
             timeLeft = 30;
             document.getElementById('countdownTimer').textContent = timeLeft;
+            
+            // Show success message
+            showStatus(`Bid of ₹${bidAmount.toFixed(2)} Cr placed by ${team}`, 'success');
         });
 
         // Quick bid
@@ -829,10 +881,21 @@
                     amount: bidAmount * 10000000,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
+                
+                // Add to bid history
+                const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
+                bidHistoryRef.set({
+                    team: maxBudgetTeam,
+                    amount: bidAmount * 10000000,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    playerId: currentPlayer.id
+                });
+                
                 timeLeft = 30;
                 document.getElementById('countdownTimer').textContent = timeLeft;
+                showStatus(`Quick bid of +₹${increment.toFixed(2)} Cr placed by system`, "info");
             } else {
-                alert("No team has enough budget for this bid!");
+                showStatus("No team has enough budget for this bid!", "danger");
             }
         }
 
@@ -885,13 +948,6 @@
             }, 5000);
         }
 
-        // Clean up when leaving page
-        window.addEventListener('beforeunload', () => {
-            if (unsubscribeTeams) unsubscribeTeams();
-            if (unsubscribePlayers) unsubscribePlayers();
-            clearInterval(timerInterval);
-        });
-
         // Create confetti effect
         function createConfetti() {
             const container = document.getElementById('confettiContainer');
@@ -914,6 +970,13 @@
                 }, 1000);
             }
         }
+
+        // Clean up when leaving page
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribeTeams) unsubscribeTeams();
+            if (unsubscribePlayers) unsubscribePlayers();
+            clearInterval(timerInterval);
+        });
     </script>
 </body>
 </html>

@@ -1,9 +1,17 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
+:root {
+    --primary: #0d6efd;
+    --success: #198754;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --dark: #212529;
+    --ipl-blue: #1a3e72;
+    --ipl-yellow: #fdb913;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
+    font-family: 'Poppins', sans-serif;
     background-color: #f0f8ff;
     padding: 20px;
 }
@@ -12,27 +20,6 @@ h1 {
     color: #e63946;
 }
 
-.player-card {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px auto;
-    width: 200px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-button {
-    background: #e63946;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #d62828;
-}
 .player-card {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
@@ -44,6 +31,8 @@ button:hover {
     display: inline-block;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 .player-card:hover {
@@ -82,6 +71,12 @@ button {
 button:hover {
     background: #ff2d4a;
 }
+
+button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
 .teams-section {
     background: rgba(0, 0, 0, 0.3);
     padding: 15px;
@@ -107,7 +102,44 @@ button:hover {
     margin: 20px 0;
     border: 1px solid #f9c80e;
 }
-/* Fade-in animation for player cards */
+
+.auction-live {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 2px solid #f9c80e;
+}
+
+.current-player {
+    text-align: center;
+}
+
+.current-player h3 {
+    color: #f9c80e;
+    font-size: 1.8rem;
+    margin: 10px 0;
+}
+
+.current-player p {
+    font-size: 1.2rem;
+    margin: 8px 0;
+}
+
+.current-player button {
+    background: #f9c80e;
+    color: #000;
+    font-weight: bold;
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    margin-top: 15px;
+}
+
+.current-player button:hover {
+    background: #ffdf5e;
+}
+
+/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -117,7 +149,6 @@ button:hover {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Pulse effect for bid button */
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
@@ -127,6 +158,34 @@ button:hover {
 button:hover {
     animation: pulse 1s infinite;
 }
+
+@keyframes hammerSwing {
+    0%, 70%, 100% { transform: translateY(-50%) rotate(45deg); }
+    80% { transform: translateY(-50%) rotate(-15deg); }
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border .75s linear infinite;
+}
+
+.error-message {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .player-card {
         width: 100%;
@@ -140,39 +199,12 @@ button:hover {
     .teams-section, .auction-status {
         padding: 10px;
     }
+    
+    .current-player h3 {
+        font-size: 1.4rem;
+    }
+    
+    .current-player p {
+        font-size: 1rem;
+    }
 }
-.auction-live {
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 20px 0;
-    border: 2px solid #f9c80e;
-  }
-  
-  .current-player {
-    text-align: center;
-  }
-  
-  .current-player h3 {
-    color: #f9c80e;
-    font-size: 1.8rem;
-    margin: 10px 0;
-  }
-  
-  .current-player p {
-    font-size: 1.2rem;
-    margin: 8px 0;
-  }
-  
-  .current-player button {
-    background: #f9c80e;
-    color: #000;
-    font-weight: bold;
-    padding: 12px 25px;
-    font-size: 1.1rem;
-    margin-top: 15px;
-  }
-  
-  .current-player button:hover {
-    background: #ffdf5e;
-  }
