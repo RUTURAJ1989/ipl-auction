@@ -11,8 +11,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-const firestore = firebase.firestore();
+const db = firebase.firestore();
+const rtdb = firebase.database();
 
 // Current player being auctioned
 let currentPlayer = null;
