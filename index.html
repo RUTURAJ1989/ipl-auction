@@ -1071,8 +1071,25 @@
             }
         });
 
-        // Quick start auction button
-        quickStartAuctionBtn.addEventListener('click', () => {
+        // In index.html, update the auction start code:
+await rtdb.ref('auction').set({
+    currentPlayer: {
+        id: doc.id,
+        name: player.name,
+        role: player.role,
+        country: player.country,
+        imageUrl: player.imageUrl,
+        basePrice: player.price * 10000000,
+        status: "auction"
+    },
+    currentBid: {
+        highestBid: player.price * 10000000,
+        highestBidder: "No bids yet",
+        amount: player.price * 10000000,  // Add this line
+        team: "No bids yet"  // Add this line
+    },
+    bidHistory: {}
+});
             // Switch to live auction tab
             const liveAuctionTab = document.querySelector('[href="#live-auction"]');
             const tabInstance = new bootstrap.Tab(liveAuctionTab);
