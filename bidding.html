@@ -450,9 +450,9 @@
 
     <!-- Firebase & Other JS -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <script>
         // =====================
@@ -800,7 +800,7 @@
             });
             
             // Reset timer
-            timeLeft = 60;
+            timeLeft = 30;
             document.getElementById('countdownTimer').textContent = timeLeft;
         });
 
@@ -813,7 +813,7 @@
             
             // Find team with highest remaining budget
             let maxBudgetTeam = null;
-            let maxBudget = 1000000000;
+            let maxBudget = 0;
             
             for (const teamCode in teams) {
                 if (teams[teamCode].remainingBudget > maxBudget) {
