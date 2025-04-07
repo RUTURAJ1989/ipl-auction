@@ -774,9 +774,9 @@
         document.getElementById('bidButton').addEventListener('click', () => {
             if (!currentPlayer) return;
             
-            const team = prompt("Enter your team code (e.g., RCB, MI):");
+            const team = prompt(`Enter your team code. Available teams: ${Object.keys(teams).join(', ')}`);
             if (!team || !teams[team]) {
-                alert("Invalid team code!");
+                alert("Invalid team code! Please enter a valid team code.");
                 return;
             }
             
