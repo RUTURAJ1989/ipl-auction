@@ -42,18 +42,20 @@ function startAuctionForPlayer(player) {
 
 // Load teams data
 function loadTeams() {
-  firestore.collection('teams').onSnapshot(snapshot => {
-    snapshot.forEach(doc => {
-      const team = doc.data();
-      teams[team.code] = {
-        name: team.name,
-        code: team.code,
-        budget: team.budget,
-        remainingBudget: team.remainingBudget || team.budget,
-        logoUrl: team.logoUrl
-      };
+    db.collection('teams').onSnapshot(snapshot => {
+        teams = {}; // Reset teams object
+        snapshot.forEach(doc => {
+            const team = doc.data();
+            teams[team.code] = {
+                id: doc.id, // Store Firestore document ID
+                name: team.name,
+                code: team.code,
+                budget: team.budget,
+                remainingBudget: team.remainingBudget || team.budget,
+                logoUrl: team.logoUrl
+            };
+        });
     });
-  });
 }
 
 // Update UI with player data
@@ -100,46 +102,49 @@ function updateTeamBudgetsUI() {
 
 // Place a bid (triggered by button click)
 function placeBid() {
-  if (!currentPlayer) return;
-  
-  const teamName = prompt("Enter your team code (e.g., RCB, MI, CSK):");
-  if (!teamName || !teams[teamName]) {
-    alert("Invalid team code!");
-    return;
-  }
-  
-  const currentBidInCr = currentPlayer.highestBid / 10000000;
-  const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
-  
-  if (isNaN(bidAmountInCr) {
-    alert("Please enter a valid number");
-    return;
-  }
-  
-  const bidAmount = bidAmountInCr * 10000000;
-  
-  // Check if bid is valid
-  if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamName].remainingBudget) {
+    if (!currentPlayer) return;
+
+    const teamCode = prompt("Enter your team code (e.g., RCB, MI, CSK):").toUpperCase();
+    const team = teams[teamCode]; // Find the team by its short code
+
+    if (!team) {
+        alert("Invalid team code! Please enter a valid team code.");
+        return;
+    }
+
+    const currentBidInCr = currentPlayer.highestBid / 10000000;
+    const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
+
+    if (isNaN(bidAmountInCr) || bidAmountInCr <= currentBidInCr) {
+        alert(`Bid must be higher than ₹${currentBidInCr.toFixed(2)} Cr`);
+        return;
+    }
+
+    const bidAmount = bidAmountInCr * 10000000;
+
+    if (bidAmount > team.remainingBudget) {
+        alert(`${team.name} doesn't have enough budget!`);
+        return;
+    }
+
     // Update Firebase (real-time sync)
-    database.ref('auction/currentBid').set({
-      highestBid: bidAmount,
-      highestBidder: teamName
+    rtdb.ref('auction/currentBid').set({
+        highestBid: bidAmount,
+        highestBidder: team.code, // Use team short code
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     });
-    
+
     // Add to bid history
-    const bidHistoryRef = database.ref('auction/bidHistory').push();
+    const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
     bidHistoryRef.set({
-      team: teamName,
-      amount: bidAmount,
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      playerId: currentPlayer.id
+        team: team.code, // Use team short code
+        amount: bidAmount,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        playerId: currentPlayer.id
     });
-    
+
     // Reset timer
     resetTimer();
-  } else {
-    alert("Invalid bid! Either too low or exceeds budget.");
-  }
 }
 
 // Quick bid function
@@ -282,6 +287,7 @@ database.ref('auction/currentBid').on('value', (snapshot) => {
     currentPlayer.highestBid = bidData.highestBid;
     currentPlayer.highestBidder = bidData.highestBidder;
     updateAuctionUI();
+    updateBidDisplay(bidData);
   }
 });
 
@@ -357,3 +363,21 @@ function initAuctionApp() {
 
 // Initialize when DOM is loaded
 document.addEventListener("DOMContentLoaded", initAuctionApp);
+
+// Update bid display
+function updateBidDisplay(bid) {
+    const bidAmount = (bid.highestBid / 10000000).toFixed(2);
+    document.getElementById('currentBid').textContent = bidAmount;
+
+    const biddingTeam = teams[bid.highestBidder]; // Find the team by its short code
+    if (biddingTeam) {
+        document.getElementById('leadingTeam').innerHTML = `
+            <img src="${biddingTeam.logoUrl}" class="team-logo me-3">
+            <div class="text-start">
+                <h4 class="mb-0 fw-bold">${biddingTeam.name}</h4>
+                <small class="text-muted">₹${(biddingTeam.remainingBudget - bid.highestBid / 10000000).toFixed(2)} Cr left</small>
+            </div>
+        `;
+        document.getElementById('leadingBidAmount').textContent = `₹${bidAmount} Cr`;
+    }
+}
