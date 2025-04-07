@@ -455,37 +455,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <script>
-        // =====================
-        // FIREBASE INITIALIZATION
-        // =====================
-        const firebaseConfig = {
-            apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
-            authDomain: "ipl-auction-f62cf.firebaseapp.com",
-            databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "ipl-auction-f62cf",
-            storageBucket: "ipl-auction-f62cf.appspot.com",
-            messagingSenderId: "1006195476972",
-            appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-        };
-
-        // Initialize Firebase
-        let db, rtdb, auth;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            rtdb = firebase.database();
-            auth = firebase.auth();
-            console.log("Firebase initialized successfully");
-        } catch (error) {
-            console.error("Firebase initialization error:", error);
-            showStatus("Failed to connect to server", "danger");
-        }
-
-        // Enable Firestore Offline Persistence
-        await db.enablePersistence().catch(err => {
-            console.error("Firestore persistence error:", err);
-        });
-
+       
         // =====================
         // APPLICATION STATE
         // =====================
