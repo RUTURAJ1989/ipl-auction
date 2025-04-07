@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
@@ -12,6 +13,27 @@ h1 {
 }
 
 .player-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    width: 200px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button {
+    background: #e63946;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #d62828;
+}
+.player-card {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     padding: 20px;
@@ -22,27 +44,6 @@ h1 {
     display: inline-block;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    animation: fadeIn 0.5s ease-out;
-}
-
-button {
-    background: #e63946;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-button:hover {
-    background: #ff2d4a;
-}
-
-button.pulse:hover {
-    animation: pulse 1s infinite;
 }
 
 .player-card:hover {
@@ -62,10 +63,25 @@ button.pulse:hover {
 }
 
 .player-card p {
-    color: #f0f0f0; /* Brighter color for better contrast */
+    color: #ddd;
     margin: 5px 0;
 }
 
+button {
+    background: #e63946;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #ff2d4a;
+}
 .teams-section {
     background: rgba(0, 0, 0, 0.3);
     padding: 15px;
@@ -90,12 +106,15 @@ button.pulse:hover {
     border-radius: 10px;
     margin: 20px 0;
     border: 1px solid #f9c80e;
-    color: #333; /* Darker text for better contrast */
 }
 /* Fade-in animation for player cards */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.player-card {
+    animation: fadeIn 0.5s ease-out;
 }
 
 /* Pulse effect for bid button */
@@ -105,6 +124,9 @@ button.pulse:hover {
     100% { transform: scale(1); }
 }
 
+button:hover {
+    animation: pulse 1s infinite;
+}
 @media (max-width: 768px) {
     .player-card {
         width: 100%;
@@ -125,10 +147,9 @@ button.pulse:hover {
     padding: 20px;
     margin: 20px 0;
     border: 2px solid #f9c80e;
-    box-shadow: 0 0 15px rgba(249, 200, 46, 0.5); /* Glow effect */
-}
+  }
   
-.current-player {
+  .current-player {
     text-align: center;
   }
   
@@ -155,7 +176,3 @@ button.pulse:hover {
   .current-player button:hover {
     background: #ffdf5e;
   }
-
-.player-card.animate {
-    animation: fadeIn 0.5s ease-out;
-}
