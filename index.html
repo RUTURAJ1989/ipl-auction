@@ -989,8 +989,8 @@
             rtdb.ref('auction/currentBid').on('value', snapshot => {
                 const bid = snapshot.val();
                 if (bid) {
-                    document.getElementById('currentAuctionPlayerBid').textContent = (bid.highestBid / 10000000).toFixed(2);
-                    document.getElementById('currentAuctionPlayerBidder').textContent = bid.highestBidder;
+                    document.getElementById('currentAuctionPlayerBid').textContent = (bid.amount / 10000000).toFixed(2);
+                    document.getElementById('currentAuctionPlayerBidder').textContent = bid.team;
                 }
             });
             
