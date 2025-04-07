@@ -573,7 +573,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="script.js"></script>
     
     <script>
         // Initialize Firebase
@@ -771,7 +770,7 @@
                 snapshot.forEach(doc => {
                     const player = doc.data();
                     const statusClass = player.status === 'sold' ? 'status-sold' : 
-                                        player.status === 'auction' ? 'status-auction' : 'status-unsold';
+                                      player.status === 'auction' ? 'status-auction' : 'status-unsold';
                     const statusText = player.status === 'sold' ? `SOLD to ${player.soldTo || 'Unknown'}` : 
                                      player.status === 'auction' ? 'AUCTION' : 'UNSOLD';
                     
@@ -864,8 +863,8 @@
             rtdb.ref('auction/currentBid').on('value', snapshot => {
                 const bid = snapshot.val();
                 if (bid) {
-                    document.getElementById('currentAuctionPlayerBid').textContent = (bid.highestBid / 10000000).toFixed(2);
-                    document.getElementById('currentAuctionPlayerBidder').textContent = bid.highestBidder;
+                    document.getElementById('currentAuctionPlayerBid').textContent = (bid.amount / 10000000).toFixed(2);
+                    document.getElementById('currentAuctionPlayerBidder').textContent = bid.team;
                 }
             });
             
