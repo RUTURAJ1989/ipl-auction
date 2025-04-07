@@ -1,6 +1,3 @@
-// Debug statement
-console.log('Script loaded successfully');
-
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
@@ -14,8 +11,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 const firestore = firebase.firestore();
-const rtdb = firebase.database();
 
 // Current player being auctioned
 let currentPlayer = null;
@@ -28,7 +25,7 @@ function startAuctionForPlayer(player) {
     name: player.name,
     role: player.role,
     country: player.country,
-    imageUrl: player.imageUrl || "https://via.placeholder.com/150",
+    imageUrl: player.imageUrl,
     basePrice: player.price,
     highestBid: player.price,
     highestBidder: "No bids yet",
@@ -36,14 +33,11 @@ function startAuctionForPlayer(player) {
   };
   
   // Update Realtime DB
-  rtdb.ref('auction/currentPlayer').set(currentPlayer);
-  rtdb.ref('auction/currentBid').set({
+  database.ref('auction/currentPlayer').set(currentPlayer);
+  database.ref('auction/currentBid').set({
     highestBid: currentPlayer.highestBid,
     highestBidder: currentPlayer.highestBidder
   });
-  
-  // Start the timer
-  startTimer();
 }
 
 // Load teams data
@@ -59,7 +53,6 @@ function loadTeams() {
         logoUrl: team.logoUrl
       };
     });
-    updateTeamBudgetsUI();
   });
 }
 
@@ -68,7 +61,7 @@ function updateAuctionUI() {
   if (!currentPlayer) return;
   
   document.getElementById("currentPlayerName").textContent = currentPlayer.name;
-  document.getElementById("currentPlayerImage").src = currentPlayer.imageUrl;
+  document.getElementById("currentPlayerImage").src = currentPlayer.imageUrl || "https://via.placeholder.com/150";
   document.getElementById("playerRole").textContent = currentPlayer.role;
   document.getElementById("playerCountry").textContent = currentPlayer.country;
   document.getElementById("basePrice").textContent = (currentPlayer.basePrice / 10000000).toFixed(2);
@@ -91,7 +84,7 @@ function updateTeamBudgetsUI() {
     const teamElement = document.createElement('div');
     teamElement.className = 'col-md-4 mb-3';
     teamElement.innerHTML = `
-      <div class="team-card p-3 rounded-3 ${currentPlayer?.highestBidder === teamCode ? 'leading-team' : ''}">
+      <div class="team-card p-3 rounded-3 ${currentPlayer.highestBidder === teamCode ? 'leading-team' : ''}">
         <div class="d-flex align-items-center">
           <img src="${team.logoUrl}" class="team-logo me-3">
           <div>
@@ -105,61 +98,47 @@ function updateTeamBudgetsUI() {
   }
 }
 
-// Place a bid
-async function placeBid() {
-  if (!currentPlayer) {
-    showStatus("No player being auctioned", "warning");
+// Place a bid (triggered by button click)
+function placeBid() {
+  if (!currentPlayer) return;
+  
+  const teamName = prompt("Enter your team code (e.g., RCB, MI, CSK):");
+  if (!teamName || !teams[teamName]) {
+    alert("Invalid team code!");
     return;
   }
-
-  const team = prompt("Enter your team code (e.g., RCB, MI):");
-  if (!team || !teams[team]) {
-    showStatus("Invalid team code!", "danger");
-    return;
-  }
-
+  
   const currentBidInCr = currentPlayer.highestBid / 10000000;
-  const bidAmountInCr = parseFloat(prompt(`Enter bid amount (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
+  const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
   
   if (isNaN(bidAmountInCr) {
-    showStatus("Please enter a valid number", "warning");
+    alert("Please enter a valid number");
     return;
   }
   
   const bidAmount = bidAmountInCr * 10000000;
   
   // Check if bid is valid
-  if (bidAmount <= currentPlayer.highestBid) {
-    showStatus(`Bid must be higher than ₹${currentBidInCr.toFixed(2)} Cr`, "warning");
-    return;
-  }
-
-  if (bidAmount > teams[team].remainingBudget) {
-    showStatus(`${team} doesn't have enough budget!`, "danger");
-    return;
-  }
-
-  try {
+  if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamName].remainingBudget) {
     // Update Firebase (real-time sync)
-    await rtdb.ref('auction/currentBid').set({
+    database.ref('auction/currentBid').set({
       highestBid: bidAmount,
-      highestBidder: team
+      highestBidder: teamName
     });
     
     // Add to bid history
-    const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
-    await bidHistoryRef.set({
-      team: team,
+    const bidHistoryRef = database.ref('auction/bidHistory').push();
+    bidHistoryRef.set({
+      team: teamName,
       amount: bidAmount,
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       playerId: currentPlayer.id
     });
     
-    showStatus(`Bid of ₹${bidAmountInCr.toFixed(2)} Cr placed by ${team}`, "success");
+    // Reset timer
     resetTimer();
-  } catch (error) {
-    console.error("Bid failed:", error);
-    showStatus("Failed to place bid", "danger");
+  } else {
+    alert("Invalid bid! Either too low or exceeds budget.");
   }
 }
 
@@ -170,13 +149,13 @@ function quickBid(increment) {
   const bidAmount = currentPlayer.highestBid + (increment * 10000000);
   const teamName = "SYS"; // System bid
   
-  rtdb.ref('auction/currentBid').set({
+  database.ref('auction/currentBid').set({
     highestBid: bidAmount,
     highestBidder: teamName
   });
   
   // Add to bid history
-  const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
+  const bidHistoryRef = database.ref('auction/bidHistory').push();
   bidHistoryRef.set({
     team: teamName,
     amount: bidAmount,
@@ -226,73 +205,43 @@ function updateTimerDisplay() {
 }
 
 // Sell player function
-async function sellPlayer() {
-  if (!currentPlayer || currentPlayer.highestBidder === "No bids yet") {
-    // Player went unsold
-    await firestore.collection('players').doc(currentPlayer.id).update({
-      status: 'unsold'
-    });
-    showStatus(`${currentPlayer.name} went unsold`, "warning");
-    return;
-  }
-
-  try {
-    // Mark player as sold in Firestore
-    await firestore.collection('players').doc(currentPlayer.id).update({
-      status: 'sold',
-      soldPrice: currentPlayer.highestBid,
-      soldTo: currentPlayer.highestBidder
-    });
-    
-    // Update team's remaining budget
+function sellPlayer() {
+  if (!currentPlayer) return;
+  
+  // Mark player as sold in Firestore
+  firestore.collection('players').doc(currentPlayer.id).update({
+    status: 'sold',
+    soldPrice: currentPlayer.highestBid,
+    soldTo: currentPlayer.highestBidder
+  });
+  
+  // Update team's remaining budget
+  if (currentPlayer.highestBidder !== "No bids yet") {
     const team = teams[currentPlayer.highestBidder];
     const newBudget = team.remainingBudget - currentPlayer.highestBid;
     
-    await firestore.collection('teams').where('code', '==', currentPlayer.highestBidder)
+    firestore.collection('teams').where('code', '==', currentPlayer.highestBidder)
       .get()
       .then(snapshot => {
         snapshot.forEach(doc => {
           doc.ref.update({ remainingBudget: newBudget });
         });
       });
-    
-    // Update UI
-    document.getElementById("soldBadge").classList.remove("d-none");
-    const bidButton = document.getElementById("bidButton");
-    if (bidButton) {
-      bidButton.classList.add("btn-success");
-      bidButton.classList.remove("btn-warning");
-      bidButton.textContent = "SOLD";
-    }
-    
-    // Play sold animation
-    const playerCard = document.querySelector(".player-card");
-    if (playerCard) {
-      playerCard.classList.add("animate__animated", "animate__tada");
-      setTimeout(() => {
-        playerCard.classList.remove("animate__animated", "animate__tada");
-      }, 1000);
-    }
-    
-    showStatus(`${currentPlayer.name} sold to ${currentPlayer.highestBidder} for ₹${(currentPlayer.highestBid / 10000000).toFixed(2)} Cr`, "success");
-  } catch (error) {
-    console.error("Error selling player:", error);
-    showStatus("Failed to complete sale", "danger");
   }
-}
-
-// Show status message
-function showStatus(message, type) {
-  const statusElement = document.getElementById("statusMessage");
-  if (!statusElement) return;
   
-  statusElement.textContent = message;
-  statusElement.className = `alert alert-${type}`;
-  statusElement.style.display = "block";
+  // Update UI
+  document.getElementById("soldBadge").classList.remove("d-none");
+  document.getElementById("bidButton").classList.add("btn-success");
+  document.getElementById("bidButton").classList.remove("btn-warning");
+  document.getElementById("bidButton").textContent = "SOLD";
+  
+  // Play sold animation
+  const playerCard = document.querySelector(".player-card");
+  playerCard.classList.add("animate__animated", "animate__tada");
   
   setTimeout(() => {
-    statusElement.style.display = "none";
-  }, 3000);
+    playerCard.classList.remove("animate__animated", "animate__tada");
+  }, 1000);
 }
 
 // Load next players
@@ -326,9 +275,29 @@ function loadNextPlayers() {
     });
 }
 
+// Listen for real-time bid changes
+database.ref('auction/currentBid').on('value', (snapshot) => {
+  const bidData = snapshot.val();
+  if (bidData && currentPlayer) {
+    currentPlayer.highestBid = bidData.highestBid;
+    currentPlayer.highestBidder = bidData.highestBidder;
+    updateAuctionUI();
+  }
+});
+
+// Listen for current player changes
+database.ref('auction/currentPlayer').on('value', (snapshot) => {
+  const playerData = snapshot.val();
+  if (playerData) {
+    currentPlayer = playerData;
+    updateAuctionUI();
+    startTimer();
+  }
+});
+
 // Load bid history
 function loadBidHistory() {
-  rtdb.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
+  database.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
     const bidHistoryContainer = document.getElementById("bidHistory");
     if (!bidHistoryContainer) return;
     
@@ -363,36 +332,14 @@ function initAuctionApp() {
   loadNextPlayers();
   loadBidHistory();
   
-  // Listen for real-time bid changes
-  rtdb.ref('auction/currentBid').on('value', (snapshot) => {
-    const bidData = snapshot.val();
-    if (bidData && currentPlayer) {
-      currentPlayer.highestBid = bidData.highestBid;
-      currentPlayer.highestBidder = bidData.highestBidder;
-      updateAuctionUI();
-    }
-  });
-
-  // Listen for current player changes
-  rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
-    const playerData = snapshot.val();
-    if (playerData) {
-      currentPlayer = playerData;
-      updateAuctionUI();
-      startTimer();
-    }
-  });
-
-  // Set up bid button if on bidding page
-  const bidButton = document.getElementById("bidButton");
-  if (bidButton) {
-    bidButton.addEventListener("click", placeBid);
+  // Check if we're on the bidding page
+  if (document.getElementById("bidButton")) {
+    document.getElementById("bidButton").addEventListener("click", placeBid);
   }
-
-  // Set up admin controls if on admin page
-  const startAuctionBtn = document.getElementById("startAuctionBtn");
-  if (startAuctionBtn) {
-    startAuctionBtn.addEventListener("click", () => {
+  
+  // Check if we're on the admin page
+  if (document.getElementById("startAuctionBtn")) {
+    document.getElementById("startAuctionBtn").addEventListener("click", () => {
       const playerId = prompt("Enter player ID to auction:");
       if (playerId) {
         firestore.collection('players').doc(playerId).get()
