@@ -23,8 +23,7 @@ const firebaseConfig = {
   } catch (error) {
     console.error("Firebase initialization error:", error);
     showStatus("Failed to connect to server", "danger");
-  }
-  
+
   // Application state
   let currentPlayer = null;
   let teams = {};
@@ -128,28 +127,8 @@ function loadTeams() {
     }, error => {
       console.error("Error loading teams:", error);
       showStatus("Failed to load teams", "danger");
-    });
+      });
   }
-            
-            const teamElement = document.createElement('div');
-            teamElement.className = 'col-md-4 mb-3';
-            teamElement.innerHTML = `
-                <div class="team-card p-3 rounded-3 ${currentPlayer?.highestBidder === team.code ? 'leading-team' : ''}">
-                    <div class="d-flex align-items-center">
-                        <img src="${team.logoUrl}" class="team-logo me-3">
-                        <div>
-                            <h5 class="mb-1">${team.name}</h5>
-                            <p class="mb-0">₹${(team.remainingBudget / 10000000).toFixed(2)} Cr</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(teamElement);
-        });
-    }, error => {
-        console.error("Error loading teams:", error);
-        showStatus("Failed to load teams", "danger");
-    });
 }
 
 // Place a bid
@@ -297,7 +276,7 @@ function placeBid() {
     document.getElementById('bidModal').addEventListener('hidden.bs.modal', () => {
         document.getElementById('bidModal').remove();
     });
-}
+
 
 // Quick bid function
 function quickBid(increment) {
