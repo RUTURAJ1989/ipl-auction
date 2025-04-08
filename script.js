@@ -1,33 +1,77 @@
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
-  authDomain: "ipl-auction-f62cf.firebaseapp.com",
-  databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ipl-auction-f62cf",
-  storageBucket: "ipl-auction-f62cf.appspot.com",
-  messagingSenderId: "1006195476972",
-  appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-};
+    apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
+    authDomain: "ipl-auction-f62cf.firebaseapp.com",
+    databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "ipl-auction-f62cf",
+    storageBucket: "ipl-auction-f62cf.appspot.com",
+    messagingSenderId: "1006195476972",
+    appId: "1:1006195476972:web:6343541fb0007925ded8c9"
+  };
+  
+  // Initialize Firebase
+  let db, rtdb, auth;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    rtdb = firebase.database();
+    auth = firebase.auth();
+    console.log("Firebase initialized successfully");
+    
+    // Initialize application
+    initAuctionApp();
+  } catch (error) {
+    console.error("Firebase initialization error:", error);
+    showStatus("Failed to connect to server", "danger");
+  }
+  
+  // Application state
+  let currentPlayer = null;
+  let teams = {};
+  let timeLeft = 30;
+  let timerInterval = null;
+  
+  // Initialize the app
+  function initAuctionApp() {
+    loadTeams();
+    loadCurrentPlayer();
+    loadNextPlayers();
+    loadBidHistory();
+    
+    // Set up bid button
+    const bidButton = document.getElementById("bidButton");
+    if (bidButton) {
+      bidButton.addEventListener("click", placeBid);
+      bidButton.disabled = false;
+      bidButton.innerHTML = '<i class="fas fa-hand-paper me-2"></i> PLACE BID';
+    }
+    
+    // Check auth status for admin link
+    auth.onAuthStateChanged(user => {
+      const adminLink = document.getElementById('adminLink');
+      if (adminLink) {
+        adminLink.classList.toggle('d-none', !user);
+      }
+    });
+  }
+  
+  /* All the other functions (loadTeams, placeBid, etc.) go here */
+  /* Include all the functions I provided earlier in this response */
 
-// Initialize Firebase
-let db, rtdb, auth;
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-  rtdb = firebase.database();
-  auth = firebase.auth();
-  console.log("Firebase initialized successfully");
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-  showStatus("Failed to connect to server", "danger");
+// Load current player data
+function loadCurrentPlayer() {
+  rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
+    const playerData = snapshot.val();
+    if (playerData) {
+      currentPlayer = playerData;
+      updateAuctionUI();
+      startTimer();
+    } else {
+      document.getElementById("currentPlayerName").textContent = "No player selected";
+      document.getElementById("bidButton").disabled = true;
+    }
+  });
 }
-
-// Application state
-let teams = {};
-let currentPlayer = null;
-let timeLeft = 30;
-let timerInterval = null;
-
 // Load teams data
 function loadTeams() {
   db.collection('teams').onSnapshot(snapshot => {
@@ -129,7 +173,7 @@ function placeBid() {
       const bidAmount = parseFloat(document.getElementById('bidAmount').value);
       const bidAmountInLakhs = bidAmount * 10000000;
 
-      if (isNaN(bidAmount) {
+      if (isNaN(bidAmount)) {
           showStatus("Please enter a valid bid amount", "danger");
           return;
       }
@@ -159,7 +203,7 @@ function placeBid() {
       rtdb.ref('auction/bidHistory').push().set({
           team: teamCode,
           amount: bidAmountInLakhs,
-          timestamp: firebase.database.ServerValue.TIMESTAMP,
+          timestamp: firebase.rtdb.ServerValue.TIMESTAMP,
           playerId: currentPlayer.id
       });
 
@@ -190,7 +234,7 @@ function quickBid(increment) {
   rtdb.ref('auction/bidHistory').push().set({
       team: teamCode,
       amount: bidAmount,
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      timestamp: firebase.rtdb.ServerValue.TIMESTAMP,
       playerId: currentPlayer.id
   });
   
@@ -271,36 +315,39 @@ function sellPlayer() {
 // Load next players
 function loadNextPlayers() {
   db.collection('players')
-      .where('status', '==', 'unsold')
-      .orderBy('price', 'desc')
-      .limit(5)
-      .get()
-      .then(snapshot => {
-          const upNextContainer = document.getElementById("upNextPlayers");
-          if (!upNextContainer) return;
-          
-          upNextContainer.innerHTML = '';
-          
-          snapshot.forEach(doc => {
-              const player = doc.data();
-              const playerElement = document.createElement('div');
-              playerElement.className = 'col-md-3 col-6 mb-3';
-              playerElement.innerHTML = `
-                  <div class="player-card-small p-3 rounded-3">
-                      <img src="${player.imageUrl || 'https://via.placeholder.com/150'}" 
-                           class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
-                      <h6 class="mb-1">${player.name}</h6>
-                      <small class="d-block mb-1">${player.role}</small>
-                      <small class="text-warning fw-bold">₹${(player.price / 10000000).toFixed(2)} Cr</small>
-                  </div>
-              `;
-              upNextContainer.appendChild(playerElement);
-          });
-      })
-      .catch(error => {
-          console.error("Error loading next players:", error);
-          showStatus("Failed to load next players", "danger");
+    .where('status', '==', 'unsold')
+    .orderBy('price', 'desc')
+    .limit(5)
+    .onSnapshot(snapshot => {
+      const upNextContainer = document.getElementById("upNextPlayers");
+      if (!upNextContainer) return;
+      
+      upNextContainer.innerHTML = '';
+      
+      if (snapshot.empty) {
+        upNextContainer.innerHTML = '<div class="col-12 text-center py-4 text-muted">No players available</div>';
+        return;
+      }
+      
+      snapshot.forEach(doc => {
+        const player = doc.data();
+        const playerElement = document.createElement('div');
+        playerElement.className = 'col-md-3 col-6 mb-3';
+        playerElement.innerHTML = `
+          <div class="player-card-small p-3 rounded-3">
+            <img src="${player.imageUrl || 'https://via.placeholder.com/150'}" 
+                 class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+            <h6 class="mb-1">${player.name}</h6>
+            <small class="d-block mb-1">${player.role}</small>
+            <small class="text-warning fw-bold">₹${(player.price / 10000000).toFixed(2)} Cr</small>
+          </div>
+        `;
+        upNextContainer.appendChild(playerElement);
       });
+    }, error => {
+      console.error("Error loading next players:", error);
+      showStatus("Failed to load next players", "danger");
+    });
 }
 
 // Load bid history

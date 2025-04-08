@@ -362,7 +362,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
             authDomain: "ipl-auction-f62cf.firebaseapp.com",
-            databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
+            rtdbURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "ipl-auction-f62cf",
             storageBucket: "ipl-auction-f62cf.appspot.com",
             messagingSenderId: "1006195476972",
@@ -370,10 +370,10 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const db = firebase.db();
         const storage = firebase.storage();
         const auth = firebase.auth();
-        const rtdb = firebase.database();
+        const rtdb = firebase.rtdb();
 
         // Check authentication state
         auth.onAuthStateChanged(user => {
@@ -456,7 +456,7 @@
                     budget: parseFloat(budget) * 10000000, // Convert to lakhs
                     logoUrl,
                     remainingBudget: parseFloat(budget) * 10000000,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.db.FieldValue.serverTimestamp()
                 });
                 
                 alert('Team added successfully!');
@@ -497,7 +497,7 @@
                     country,
                     imageUrl,
                     status: 'unsold',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.db.FieldValue.serverTimestamp()
                 });
                 
                 alert('Player added successfully!');
@@ -801,7 +801,7 @@
                             budget: parseFloat(row.Budget) * 10000000,
                             logoUrl: row.LogoURL || 'https://via.placeholder.com/100',
                             remainingBudget: parseFloat(row.Budget) * 10000000,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            createdAt: firebase.db.FieldValue.serverTimestamp()
                         });
                         successCount++;
                     } catch (error) {
@@ -851,7 +851,7 @@
                             country: row.Country || 'India',
                             imageUrl: row.ImageURL || 'https://via.placeholder.com/150',
                             status: 'unsold',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            createdAt: firebase.db.FieldValue.serverTimestamp()
                         });
                         successCount++;
                     } catch (error) {
