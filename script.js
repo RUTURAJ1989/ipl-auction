@@ -60,17 +60,22 @@ const firebaseConfig = {
 
 // Load current player data
 function loadCurrentPlayer() {
-  rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
-    const playerData = snapshot.val();
-    if (playerData) {
-      currentPlayer = playerData;
-      updateAuctionUI();
-      startTimer();
-    } else {
-      document.getElementById("currentPlayerName").textContent = "No player selected";
-      document.getElementById("bidButton").disabled = true;
-    }
-  });
+    console.log("Loading Current Player...");
+    rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
+        const playerData = snapshot.val();
+        console.log("Current Player Data:", playerData);
+        if (playerData) {
+            currentPlayer = playerData;
+            updateAuctionUI();
+            startTimer();
+        } else {
+            console.warn("No player selected");
+            document.getElementById("currentPlayerName").textContent = "No player selected";
+            document.getElementById("bidButton").disabled = true;
+        }
+    }, (error) => {
+        console.error("Error in currentPlayer listener:", error);
+    });
 }
 // Load teams data
 function loadTeams() {
@@ -247,6 +252,11 @@ function startTimer() {
   timeLeft = 30;
   updateTimerDisplay();
   
+  console.log("Starting Timer");
+  timerInterval = setInterval(() => {
+      console.log("Timer Tick:", timeLeft);
+  }, 1000);
+  
   timerInterval = setInterval(() => {
       timeLeft--;
       updateTimerDisplay();
@@ -259,21 +269,23 @@ function startTimer() {
 }
 
 function resetTimer() {
-  timeLeft = 30;
-  updateTimerDisplay();
+    timeLeft = 30;
+    console.log("Timer Reset:", timeLeft);
+    updateTimerDisplay();
 }
 
 function updateTimerDisplay() {
-  const timerElement = document.getElementById("countdownTimer");
-  if (timerElement) {
-      timerElement.textContent = timeLeft;
-      
-      if (timeLeft <= 10) {
-          timerElement.classList.add("text-danger", "animate__animated", "animate__pulse");
-      } else {
-          timerElement.classList.remove("text-danger", "animate__animated", "animate__pulse");
-      }
-  }
+    console.log("Timer Display Updated:", timeLeft);
+    const timerElement = document.getElementById("countdownTimer");
+    if (timerElement) {
+        timerElement.textContent = timeLeft;
+        
+        if (timeLeft <= 10) {
+            timerElement.classList.add("text-danger", "animate__animated", "animate__pulse");
+        } else {
+            timerElement.classList.remove("text-danger", "animate__animated", "animate__pulse");
+        }
+    }
 }
 
 // Sell player function
@@ -383,6 +395,16 @@ function loadBidHistory() {
           bidHistoryContainer.innerHTML = '<div class="text-center py-2 text-muted">No bids yet</div>';
       }
   });
+
+  rtdb.ref('auction/bidHistory').once('value').then(snapshot => {
+    console.log("Bid History Data:", snapshot.val());
+  }).catch(error => console.error("Error fetching bid history:", error));
+
+  rtdb.ref('auction/bidHistory').on('value', (snapshot) => {
+    console.log("Bid History Updated:", snapshot.val());
+}, (error) => {
+    console.error("Error in bidHistory listener:", error);
+});
 }
 
 // Show status message
