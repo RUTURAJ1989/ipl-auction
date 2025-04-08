@@ -198,16 +198,19 @@ function placeBid() {
   
       if (bidAmountInLakhs <= currentPlayer.highestBid) {
         showStatus(`Bid must be higher than ₹${(currentPlayer.highestBid / 10000000).toFixed(2)} Cr`, "warning");
+        console.warn("Bid too low:", bidAmountInLakhs, currentPlayer.highestBid);
         return;
       }
   
       if (!teams[teamCode]) {
         showStatus("Invalid team selected", "danger");
+        console.warn("Invalid team selected:", teamCode);
         return;
       }
   
       if (bidAmountInLakhs > teams[teamCode].remainingBudget) {
         showStatus(`${teams[teamCode].name} doesn't have enough budget!`, "danger");
+        console.warn("Insufficient budget:", teams[teamCode].remainingBudget, bidAmountInLakhs);
         return;
       }
   
@@ -217,6 +220,13 @@ function placeBid() {
         highestBidder: teamCode
       });
   
+      console.log("Placing Bid:", {
+        teamCode,
+        bidAmount,
+        bidAmountInLakhs,
+        currentPlayer
+      });
+
       resetTimer();
       modal.hide();
       document.getElementById('bidModal').remove();
@@ -307,6 +317,11 @@ function startTimer() {
     timeLeft = 30;
     updateTimerDisplay();
     
+    console.log("Starting Timer");
+    timerInterval = setInterval(() => {
+        console.log("Timer Tick:", timeLeft);
+    }, 1000);
+    
     timerInterval = setInterval(() => {
         timeLeft--;
         updateTimerDisplay();
@@ -320,10 +335,12 @@ function startTimer() {
 
 function resetTimer() {
     timeLeft = 30;
+    console.log("Timer Reset:", timeLeft);
     updateTimerDisplay();
 }
 
 function updateTimerDisplay() {
+    console.log("Timer Display Updated:", timeLeft);
     const timerElement = document.getElementById("countdownTimer");
     if (timerElement) {
         timerElement.textContent = timeLeft;
@@ -493,6 +510,10 @@ function initAuctionApp() {
             adminLink.classList.toggle('d-none', !user);
         }
     });
+
+    rtdb.ref('auction/currentBid').once('value').then(snapshot => {
+        console.log("Current Bid Data:", snapshot.val());
+    }).catch(error => console.error("Error fetching current bid:", error));
 }
 
 // Update UI with player data
@@ -541,6 +562,14 @@ function updateAuctionUI() {
         if (leadingCard) {
             leadingCard.classList.add('leading-team');
         }
+    }
+
+    console.log("Current Player:", currentPlayer);
+    console.log("Teams:", teams);
+
+    const soldButtonContainer = document.getElementById("soldButtonContainer");
+    if (soldButtonContainer) {
+        console.log("Rendering Sold Button:", currentPlayer.highestBidder);
     }
 }
 
