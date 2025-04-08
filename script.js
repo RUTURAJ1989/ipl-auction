@@ -129,7 +129,7 @@ function placeBid() {
         const bidAmount = parseFloat(document.getElementById('bidAmount').value);
         const bidAmountInLakhs = bidAmount * 10000000;
 
-        if (isNaN(bidAmount) {
+        if (isNaN(bidAmount)) {
             showStatus("Please enter a valid bid amount", "danger");
             return;
         }
