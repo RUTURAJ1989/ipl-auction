@@ -393,6 +393,13 @@
                                     <button class="btn btn-outline-warning" onclick="quickBid(1)" disabled>+1.00 Cr</button>
                                 </div>
                             </div>
+                            
+                            <!-- Sell Button -->
+                            <div class="text-center">
+                                <button id="sellButton" class="btn btn-success btn-lg px-5 py-3 mb-3">
+                                    <i class="fas fa-check me-2"></i> Sell Player
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Team Bidding Section -->
@@ -525,18 +532,19 @@
             }
         });
 
+        // Improved error handling and UI updates
         async function loadTeams() {
             try {
                 const snapshot = await db.collection('teams').get();
                 teams = {};
                 const container = document.getElementById('teamsContainer');
                 container.innerHTML = '';
-                
+
                 if (snapshot.empty) {
                     container.innerHTML = '<div class="col-12 text-center py-4 text-muted">No teams found</div>';
                     return;
                 }
-                
+
                 snapshot.forEach(doc => {
                     teams[doc.id] = doc.data();
                     renderTeam(doc.data());
@@ -550,6 +558,7 @@
             }
         }
 
+        // Improved error handling and UI updates
         async function loadUnsoldPlayers() {
             try {
                 const snapshot = await db.collection('players')
@@ -557,15 +566,15 @@
                     .orderBy('price', 'desc')
                     .limit(5)
                     .get();
-                
+
                 const container = document.getElementById('upNextPlayers');
                 container.innerHTML = '';
-                
+
                 if (snapshot.empty) {
                     container.innerHTML = '<div class="col-12 text-center py-4 text-muted">No players available</div>';
                     return;
                 }
-                
+
                 snapshot.forEach(doc => {
                     renderUpNextPlayer(doc.data());
                 });
@@ -773,35 +782,25 @@
         // Place bid
         document.getElementById('bidButton').addEventListener('click', () => {
             if (!currentPlayer) return;
-            
-            const team = prompt("Enter your team code (e.g., RCB, MI):");
-            if (!team || !teams[team]) {
-                alert("Invalid team code!");
-                return;
-            }
-            
+
+            const teamId = 'Ho5PQ6flN1DLAeicLHvA'; // Fixed team ID
             const currentBid = parseFloat(document.getElementById('currentBid').textContent);
             const bidAmount = parseFloat(prompt(`Enter bid amount (current: ₹${currentBid.toFixed(2)} Cr):`));
-            
+
             if (isNaN(bidAmount) || bidAmount <= currentBid) {
                 alert(`Bid must be higher than ₹${currentBid.toFixed(2)} Cr`);
                 return;
             }
-            
-            if (bidAmount > teams[team].remainingBudget) {
-                alert(`${team} doesn't have enough budget!`);
-                return;
-            }
-            
+
             // Update bid in Realtime DB
             rtdb.ref('auction/currentBid').set({
-                team: team,
+                team: teamId,
                 amount: bidAmount * 10000000,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
-            
+
             // Reset timer
-            timeLeft = 60;
+            timeLeft = 30;
             document.getElementById('countdownTimer').textContent = timeLeft;
         });
 
@@ -847,7 +846,7 @@
                         <img src="${team.logoUrl}" class="team-logo me-3">
                         <div>
                             <h6 class="mb-1">${team.name}</h6>
-                            <small class="text-muted">₹${team.remainingBudget.toFixed(2)} Cr remaining</small>
+                            <small class="text-muted">₹${(team.remainingBudget / 10000000).toFixed(2)} Cr remaining</small>
                         </div>
                     </div>
                 </div>
@@ -866,7 +865,7 @@
                          class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
                     <h6 class="mb-1">${player.name}</h6>
                     <small class="d-block mb-1">${player.role}</small>
-                    <small class="text-warning fw-bold">₹${player.price.toFixed(2)} Cr</small>
+                    <small class="text-warning fw-bold">₹${(player.price / 10000000).toFixed(2)} Cr</small>
                 </div>
             `;
             container.appendChild(playerElement);
@@ -876,10 +875,10 @@
         function showStatus(message, type = "info") {
             const alert = document.getElementById('statusAlert');
             const messageEl = document.getElementById('statusMessage');
-            
+
             alert.className = `alert status-alert alert-${type} show`;
             messageEl.textContent = message;
-            
+
             setTimeout(() => {
                 alert.classList.remove('show');
             }, 5000);
@@ -914,6 +913,49 @@
                 }, 1000);
             }
         }
+
+        // Add functionality to sell the player
+        document.getElementById('sellButton').addEventListener('click', async () => {
+            if (!currentPlayer) return;
+
+            try {
+                const teamId = 'Ho5PQ6flN1DLAeicLHvA'; // Fixed team ID
+                const bidSnapshot = await rtdb.ref('auction/currentBid').once('value');
+                const bid = bidSnapshot.val();
+
+                if (!bid || bid.team !== teamId) {
+                    alert('No valid bid found for this team.');
+                    return;
+                }
+
+                // Mark player as sold in Firestore
+                await db.collection('players').doc(currentPlayer.id).update({
+                    status: 'sold',
+                    soldPrice: bid.amount,
+                    soldTo: bid.team
+                });
+
+                // Update team's remaining budget
+                const teamDoc = await db.collection('teams').doc(bid.team).get();
+                if (teamDoc.exists) {
+                    const team = teamDoc.data();
+                    const newBudget = team.remainingBudget - bid.amount;
+                    await teamDoc.ref.update({ remainingBudget: newBudget });
+                }
+
+                alert(`Player sold to team with ID: ${bid.team}`);
+
+                // Reset auction state
+                rtdb.ref('auction/currentPlayer').remove();
+                rtdb.ref('auction/currentBid').remove();
+                document.getElementById('soldBadge').classList.remove('d-none');
+                document.getElementById('bidButton').disabled = true;
+                document.getElementById('sellButton').disabled = true;
+            } catch (error) {
+                console.error('Error selling player:', error);
+                alert('Failed to sell player. Please try again.');
+            }
+        });
     </script>
 </body>
 </html>

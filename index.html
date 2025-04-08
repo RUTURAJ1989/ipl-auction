@@ -651,73 +651,85 @@
         // Add Team
         teamForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const name = document.getElementById('teamName').value;
-            const code = document.getElementById('teamCode').value.toUpperCase();
-            const budget = document.getElementById('teamBudget').value;
-            const logoFile = document.getElementById('teamLogo').files[0];
-            
+            addTeam();
+        });
+
+        async function addTeam() {
             try {
+                const name = document.getElementById('teamName').value;
+                const code = document.getElementById('teamCode').value.toUpperCase();
+                const budget = parseFloat(document.getElementById('teamBudget').value);
+                const logoFile = document.getElementById('teamLogo').files[0];
+
+                if (!name || !code || isNaN(budget)) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+
                 let logoUrl = 'https://via.placeholder.com/100';
-                
-                // Upload logo if selected
+
                 if (logoFile) {
                     const storageRef = storage.ref(`team_logos/${code}_${Date.now()}`);
                     const snapshot = await storageRef.put(logoFile);
                     logoUrl = await snapshot.ref.getDownloadURL();
                 }
-                
-                // Add team to Firestore
+
                 await db.collection('teams').add({
                     name,
                     code,
-                    budget: parseFloat(budget),
+                    budget,
                     logoUrl,
-                    remainingBudget: parseFloat(budget),
+                    remainingBudget: budget,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
+
                 alert('Team added successfully!');
                 teamForm.reset();
                 logoPreview.src = 'https://via.placeholder.com/100';
                 loadTeams();
             } catch (error) {
                 console.error('Error adding team:', error);
-                alert('Error adding team. Please try again.');
+                alert('Failed to add team. Please try again.');
             }
-        });
+        }
 
         // Add Player
         playerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const name = document.getElementById('playerName').value;
-            const role = document.getElementById('playerRole').value;
-            const price = document.getElementById('playerPrice').value;
-            const country = document.getElementById('playerCountry').value;
-            const imageFile = document.getElementById('playerImage').files[0];
-            
+            addPlayer();
+        });
+
+        async function addPlayer() {
             try {
+                const name = document.getElementById('playerName').value;
+                const role = document.getElementById('playerRole').value;
+                const price = parseFloat(document.getElementById('playerPrice').value);
+                const country = document.getElementById('playerCountry').value;
+                const imageFile = document.getElementById('playerImage').files[0];
+
+                if (!name || !role || isNaN(price)) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+
                 let imageUrl = 'https://via.placeholder.com/150';
-                
-                // Upload image if selected
+
                 if (imageFile) {
                     const storageRef = storage.ref(`player_images/${name.replace(/\s+/g, '_')}_${Date.now()}`);
                     const snapshot = await storageRef.put(imageFile);
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
-                
-                // Add player to Firestore
+
                 await db.collection('players').add({
                     name,
                     role,
-                    price: parseFloat(price),
+                    price,
                     country,
                     imageUrl,
                     status: 'unsold',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
+
                 alert('Player added successfully!');
                 playerForm.reset();
                 playerImagePreview.src = 'https://via.placeholder.com/150';
@@ -725,9 +737,9 @@
                 loadUnsoldPlayersForAuction();
             } catch (error) {
                 console.error('Error adding player:', error);
-                alert('Error adding player. Please try again.');
+                alert('Failed to add player. Please try again.');
             }
-        });
+        }
 
         // Load Teams
         async function loadTeams() {
@@ -896,49 +908,52 @@
 
         // Start auction for selected player
         startAuctionBtn.addEventListener('click', async () => {
+            startAuction();
+        });
+
+        async function startAuction() {
             const playerId = playerSelect.value;
             if (!playerId) {
-                alert('Please select a player first');
+                alert('Please select a player to start the auction.');
                 return;
             }
-            
+
             try {
                 const doc = await db.collection('players').doc(playerId).get();
-                if (doc.exists) {
-                    const player = doc.data();
-                    
-                    // Update player status to "auction"
-                    await doc.ref.update({ status: 'auction' });
-                    
-                    // Start auction in Realtime DB
-                    await rtdb.ref('auction').set({
-                        currentPlayer: {
-                            id: doc.id,
-                            name: player.name,
-                            role: player.role,
-                            country: player.country,
-                            imageUrl: player.imageUrl,
-                            basePrice: player.price * 10000000,
-                            highestBid: player.price * 10000000,
-                            highestBidder: "No bids yet",
-                            status: "auction"
-                        },
-                        currentBid: {
-                            highestBid: player.price * 10000000,
-                            highestBidder: "No bids yet"
-                        }
-                    });
-                    
-                    alert(`Auction started for ${player.name}`);
-                    loadPlayers();
-                } else {
-                    alert('Player not found!');
+                if (!doc.exists) {
+                    alert('Player not found.');
+                    return;
                 }
+
+                const player = doc.data();
+
+                await doc.ref.update({ status: 'auction' });
+
+                await rtdb.ref('auction').set({
+                    currentPlayer: {
+                        id: doc.id,
+                        name: player.name,
+                        role: player.role,
+                        country: player.country,
+                        imageUrl: player.imageUrl,
+                        basePrice: player.price * 10000000,
+                        highestBid: player.price * 10000000,
+                        highestBidder: 'No bids yet',
+                        status: 'auction'
+                    },
+                    currentBid: {
+                        highestBid: player.price * 10000000,
+                        highestBidder: 'No bids yet'
+                    }
+                });
+
+                alert(`Auction started for ${player.name}`);
+                loadPlayers();
             } catch (error) {
                 console.error('Error starting auction:', error);
-                alert('Error starting auction. Please try again.');
+                alert('Failed to start auction. Please try again.');
             }
-        });
+        }
 
         // Quick start auction button
         quickStartAuctionBtn.addEventListener('click', () => {

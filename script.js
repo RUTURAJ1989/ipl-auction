@@ -31,35 +31,34 @@ function startAuctionForPlayer(player) {
     highestBidder: "No bids yet",
     status: "auction"
   };
-  
+
   // Update Realtime DB
-  database.ref('auction/currentPlayer').set(currentPlayer);
-  database.ref('auction/currentBid').set({
+  rtdb.ref('auction/currentPlayer').set(currentPlayer);
+  rtdb.ref('auction/currentBid').set({
     highestBid: currentPlayer.highestBid,
     highestBidder: currentPlayer.highestBidder
   });
+
+  updateAuctionUI();
 }
 
-// Load teams data
+// Function to load teams data
 function loadTeams() {
-  firestore.collection('teams').onSnapshot(snapshot => {
+  db.collection('teams').onSnapshot(snapshot => {
+    teams = {};
     snapshot.forEach(doc => {
-      const team = doc.data();
-      teams[team.code] = {
-        name: team.name,
-        code: team.code,
-        budget: team.budget,
-        remainingBudget: team.remainingBudget || team.budget,
-        logoUrl: team.logoUrl
-      };
+      teams[doc.id] = doc.data();
     });
+    updateTeamBudgetsUI();
+  }, error => {
+    console.error("Error loading teams:", error);
   });
 }
 
-// Update UI with player data
+// Function to update auction UI
 function updateAuctionUI() {
   if (!currentPlayer) return;
-  
+
   document.getElementById("currentPlayerName").textContent = currentPlayer.name;
   document.getElementById("currentPlayerImage").src = currentPlayer.imageUrl || "https://via.placeholder.com/150";
   document.getElementById("playerRole").textContent = currentPlayer.role;
@@ -67,30 +66,27 @@ function updateAuctionUI() {
   document.getElementById("basePrice").textContent = (currentPlayer.basePrice / 10000000).toFixed(2);
   document.getElementById("currentBid").textContent = (currentPlayer.highestBid / 10000000).toFixed(2);
   document.getElementById("highestBidder").textContent = currentPlayer.highestBidder;
-  
-  // Update team budgets display
+
   updateTeamBudgetsUI();
 }
 
-// Update team budgets UI
+// Function to update team budgets UI
 function updateTeamBudgetsUI() {
   const teamsContainer = document.getElementById("teamsContainer");
   if (!teamsContainer) return;
-  
+
   teamsContainer.innerHTML = '';
-  
+
   for (const teamCode in teams) {
     const team = teams[teamCode];
     const teamElement = document.createElement('div');
-    teamElement.className = 'col-md-4 mb-3';
+    teamElement.className = 'team-card';
     teamElement.innerHTML = `
-      <div class="team-card p-3 rounded-3 ${currentPlayer.highestBidder === teamCode ? 'leading-team' : ''}">
-        <div class="d-flex align-items-center">
-          <img src="${team.logoUrl}" class="team-logo me-3">
-          <div>
-            <h5 class="mb-1">${team.name}</h5>
-            <p class="mb-0">₹${(team.remainingBudget / 10000000).toFixed(2)} Cr</p>
-          </div>
+      <div class="d-flex align-items-center">
+        <img src="${team.logoUrl}" class="team-logo me-3">
+        <div>
+          <h6 class="mb-1">${team.name}</h6>
+          <small class="text-muted">₹${(team.remainingBudget / 10000000).toFixed(2)} Cr remaining</small>
         </div>
       </div>
     `;
@@ -98,47 +94,52 @@ function updateTeamBudgetsUI() {
   }
 }
 
-// Place a bid (triggered by button click)
+// Function to place a bid
 function placeBid() {
   if (!currentPlayer) return;
-  
-  const teamName = prompt("Enter your team code (e.g., RCB, MI, CSK):");
-  if (!teamName || !teams[teamName]) {
-    alert("Invalid team code!");
+
+  // Prompt user for team code
+  let teamCode = prompt("Enter your team code (e.g., RCB, MI, CSK):");
+  if (!teamCode) {
+    alert("Team code is required to place a bid.");
     return;
   }
-  
+
+  // Normalize team code (trim spaces and convert to uppercase)
+  teamCode = teamCode.trim().toUpperCase();
+
+  // Validate team code
+  if (!teams[teamCode]) {
+    alert("Invalid team code. Please try again.");
+    return;
+  }
+
+  // Get current bid and prompt for new bid
   const currentBidInCr = currentPlayer.highestBid / 10000000;
   const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
-  
-  if (isNaN(bidAmountInCr) {
-    alert("Please enter a valid number");
+
+  // Validate bid amount
+  if (isNaN(bidAmountInCr)) {
+    alert("Invalid bid amount. Please enter a number.");
     return;
   }
-  
+
   const bidAmount = bidAmountInCr * 10000000;
-  
+
   // Check if bid is valid
-  if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamName].remainingBudget) {
-    // Update Firebase (real-time sync)
-    database.ref('auction/currentBid').set({
-      highestBid: bidAmount,
-      highestBidder: teamName
+  if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamCode].remainingBudget) {
+    currentPlayer.highestBid = bidAmount;
+    currentPlayer.highestBidder = teamCode;
+
+    // Update Realtime DB
+    rtdb.ref('auction/currentBid').set({
+      highestBid: currentPlayer.highestBid,
+      highestBidder: currentPlayer.highestBidder
     });
-    
-    // Add to bid history
-    const bidHistoryRef = database.ref('auction/bidHistory').push();
-    bidHistoryRef.set({
-      team: teamName,
-      amount: bidAmount,
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      playerId: currentPlayer.id
-    });
-    
-    // Reset timer
-    resetTimer();
+
+    updateAuctionUI();
   } else {
-    alert("Invalid bid! Either too low or exceeds budget.");
+    alert("Invalid bid. Ensure it is higher than the current bid and within your budget.");
   }
 }
 
@@ -149,13 +150,13 @@ function quickBid(increment) {
   const bidAmount = currentPlayer.highestBid + (increment * 10000000);
   const teamName = "SYS"; // System bid
   
-  database.ref('auction/currentBid').set({
+  rtdb.ref('auction/currentBid').set({
     highestBid: bidAmount,
     highestBidder: teamName
   });
   
   // Add to bid history
-  const bidHistoryRef = database.ref('auction/bidHistory').push();
+  const bidHistoryRef = rtdb.ref('auction/bidHistory').push();
   bidHistoryRef.set({
     team: teamName,
     amount: bidAmount,
@@ -209,7 +210,7 @@ function sellPlayer() {
   if (!currentPlayer) return;
   
   // Mark player as sold in Firestore
-  firestore.collection('players').doc(currentPlayer.id).update({
+  db.collection('players').doc(currentPlayer.id).update({
     status: 'sold',
     soldPrice: currentPlayer.highestBid,
     soldTo: currentPlayer.highestBidder
@@ -220,7 +221,7 @@ function sellPlayer() {
     const team = teams[currentPlayer.highestBidder];
     const newBudget = team.remainingBudget - currentPlayer.highestBid;
     
-    firestore.collection('teams').where('code', '==', currentPlayer.highestBidder)
+    db.collection('teams').where('code', '==', currentPlayer.highestBidder)
       .get()
       .then(snapshot => {
         snapshot.forEach(doc => {
@@ -246,7 +247,7 @@ function sellPlayer() {
 
 // Load next players
 function loadNextPlayers() {
-  firestore.collection('players')
+  db.collection('players')
     .where('status', '==', 'unsold')
     .orderBy('price', 'desc')
     .limit(5)
@@ -276,7 +277,7 @@ function loadNextPlayers() {
 }
 
 // Listen for real-time bid changes
-database.ref('auction/currentBid').on('value', (snapshot) => {
+rtdb.ref('auction/currentBid').on('value', (snapshot) => {
   const bidData = snapshot.val();
   if (bidData && currentPlayer) {
     currentPlayer.highestBid = bidData.highestBid;
@@ -286,7 +287,7 @@ database.ref('auction/currentBid').on('value', (snapshot) => {
 });
 
 // Listen for current player changes
-database.ref('auction/currentPlayer').on('value', (snapshot) => {
+rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
   const playerData = snapshot.val();
   if (playerData) {
     currentPlayer = playerData;
@@ -297,7 +298,7 @@ database.ref('auction/currentPlayer').on('value', (snapshot) => {
 
 // Load bid history
 function loadBidHistory() {
-  database.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
+  rtdb.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
     const bidHistoryContainer = document.getElementById("bidHistory");
     if (!bidHistoryContainer) return;
     
@@ -342,7 +343,7 @@ function initAuctionApp() {
     document.getElementById("startAuctionBtn").addEventListener("click", () => {
       const playerId = prompt("Enter player ID to auction:");
       if (playerId) {
-        firestore.collection('players').doc(playerId).get()
+        db.collection('players').doc(playerId).get()
           .then(doc => {
             if (doc.exists) {
               startAuctionForPlayer({ id: doc.id, ...doc.data() });
