@@ -65,10 +65,10 @@ function loadNextPlayers() {
         .limit(5)
         .get()
         .then(snapshot => {
-            const container = document.getElementById("upNextPlayers");
-            if (!container) return;
+            const upNextContainer = document.getElementById("upNextPlayers");
+            if (!upNextContainer) return;
 
-            container.innerHTML = '';
+            upNextContainer.innerHTML = ''; // Clear the spinner and previous content
 
             snapshot.forEach(doc => {
                 const player = doc.data();
@@ -83,7 +83,7 @@ function loadNextPlayers() {
                         <small class="text-warning fw-bold">₹${(player.price / 10000000).toFixed(2)} Cr</small>
                     </div>
                 `;
-                container.appendChild(playerElement);
+                upNextContainer.appendChild(playerElement);
             });
         })
         .catch(error => {
@@ -99,7 +99,7 @@ function loadTeams() {
         const container = document.getElementById("teamsContainer");
         if (!container) return;
 
-        container.innerHTML = '';
+        container.innerHTML = ''; // Clear the spinner and previous content
 
         snapshot.forEach(doc => {
             const team = doc.data();
@@ -243,17 +243,24 @@ function placeBid() {
 
 // Quick bid function
 function quickBid(increment) {
-    if (!currentPlayer) return;
+    if (!currentPlayer) {
+        showStatus("No player is currently being auctioned", "warning");
+        return;
+    }
 
     const bidAmount = currentPlayer.highestBid + (increment * 10000000);
-    const teamCode = "SYS"; // System bid
+    const teamCode = "SYS"; // Replace with a valid team code if needed
+
+    if (!teams[teamCode]) {
+        showStatus("Invalid team for quick bid", "danger");
+        return;
+    }
 
     rtdb.ref('auction/currentBid').set({
         highestBid: bidAmount,
         highestBidder: teamCode
     });
 
-    // Add to bid history
     rtdb.ref('auction/bidHistory').push().set({
         team: teamCode,
         amount: bidAmount,
@@ -340,41 +347,6 @@ function sellPlayer() {
     setTimeout(() => {
         playerCard.classList.remove("animate__animated", "animate__tada");
     }, 1000);
-}
-
-// Load next players
-function loadNextPlayers() {
-    db.collection('players')
-        .where('status', '==', 'unsold')
-        .orderBy('price', 'desc')
-        .limit(5)
-        .get()
-        .then(snapshot => {
-            const upNextContainer = document.getElementById("upNextPlayers");
-            if (!upNextContainer) return;
-
-            upNextContainer.innerHTML = '';
-
-            snapshot.forEach(doc => {
-                const player = doc.data();
-                const playerElement = document.createElement('div');
-                playerElement.className = 'col-md-3 col-6 mb-3';
-                playerElement.innerHTML = `
-                    <div class="player-card-small p-3 rounded-3">
-                        <img src="${player.imageUrl || 'https://via.placeholder.com/150'}" 
-                             class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
-                        <h6 class="mb-1">${player.name}</h6>
-                        <small class="d-block mb-1">${player.role}</small>
-                        <small class="text-warning fw-bold">₹${(player.price / 10000000).toFixed(2)} Cr</small>
-                    </div>
-                `;
-                upNextContainer.appendChild(playerElement);
-            });
-        })
-        .catch(error => {
-            console.error("Error loading next players:", error);
-            showStatus("Failed to load next players", "danger");
-        });
 }
 
 // Load bid history
@@ -481,7 +453,6 @@ function updateAuctionUI() {
     document.getElementById("currentBid").textContent = (currentPlayer.highestBid / 10000000).toFixed(2);
     document.getElementById("highestBidder").textContent = currentPlayer.highestBidder;
 
-    // Update leading team display
     const leadingTeamDiv = document.getElementById("leadingTeam");
     if (leadingTeamDiv) {
         if (currentPlayer.highestBidder !== "No bids yet" && teams[currentPlayer.highestBidder]) {
@@ -493,7 +464,6 @@ function updateAuctionUI() {
                     <small class="text-muted">₹${((team.remainingBudget - currentPlayer.highestBid) / 10000000).toFixed(2)} Cr left</small>
                 </div>
             `;
-            document.getElementById("leadingBidAmount").textContent = `₹${(currentPlayer.highestBid / 10000000).toFixed(2)} Cr`;
         } else {
             leadingTeamDiv.innerHTML = `
                 <div class="text-start">
@@ -502,27 +472,6 @@ function updateAuctionUI() {
                 </div>
             `;
         }
-    }
-
-    // Update team cards highlighting
-    const teamCards = document.querySelectorAll('.team-card');
-    teamCards.forEach(card => {
-        card.classList.remove('leading-team');
-    });
-
-    if (currentPlayer.highestBidder !== "No bids yet") {
-        const leadingCard = document.querySelector(`.team-card img[src="${teams[currentPlayer.highestBidder]?.logoUrl}"]`)?.closest('.team-card');
-        if (leadingCard) {
-            leadingCard.classList.add('leading-team');
-        }
-    }
-
-    console.log("Current Player:", currentPlayer);
-    console.log("Teams:", teams);
-
-    const soldButtonContainer = document.getElementById("soldButtonContainer");
-    if (soldButtonContainer) {
-        console.log("Rendering Sold Button:", currentPlayer.highestBidder);
     }
 }
 
