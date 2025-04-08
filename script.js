@@ -441,7 +441,7 @@ function initAuctionApp() {
 // Update UI with player data
 function updateAuctionUI() {
   if (!currentPlayer) return;
-  
+
   document.getElementById("currentPlayerName").textContent = currentPlayer.name;
   document.getElementById("currentPlayerImage").src = currentPlayer.imageUrl || "https://via.placeholder.com/150";
   document.getElementById("playerRole").textContent = currentPlayer.role;
@@ -449,7 +449,7 @@ function updateAuctionUI() {
   document.getElementById("basePrice").textContent = (currentPlayer.basePrice / 10000000).toFixed(2);
   document.getElementById("currentBid").textContent = (currentPlayer.highestBid / 10000000).toFixed(2);
   document.getElementById("highestBidder").textContent = currentPlayer.highestBidder;
-  
+
   // Update leading team display
   const leadingTeamDiv = document.getElementById("leadingTeam");
   if (leadingTeamDiv) {
@@ -472,19 +472,80 @@ function updateAuctionUI() {
           `;
       }
   }
-  
+
+  // Add "Sold" button for admin
+  const soldButtonContainer = document.getElementById("soldButtonContainer");
+  if (soldButtonContainer) {
+      if (currentPlayer.highestBidder !== "No bids yet") {
+          soldButtonContainer.innerHTML = `
+              <button id="sellPlayerButton" class="btn btn-success">
+                  <i class="fas fa-check me-2"></i> Sell Player
+              </button>
+          `;
+
+          // Add event listener to the "Sell Player" button
+          document.getElementById("sellPlayerButton").addEventListener("click", () => {
+              sellPlayerToTeam(currentPlayer.highestBidder, currentPlayer.highestBid);
+          });
+      } else {
+          soldButtonContainer.innerHTML = '';
+      }
+  }
+
   // Update team cards highlighting
   const teamCards = document.querySelectorAll('.team-card');
   teamCards.forEach(card => {
       card.classList.remove('leading-team');
   });
-  
+
   if (currentPlayer.highestBidder !== "No bids yet") {
       const leadingCard = document.querySelector(`.team-card img[src="${teams[currentPlayer.highestBidder]?.logoUrl}"]`)?.closest('.team-card');
       if (leadingCard) {
           leadingCard.classList.add('leading-team');
       }
   }
+}
+
+// Sell player to team function
+function sellPlayerToTeam(teamCode, bidAmount) {
+  if (!currentPlayer || !teams[teamCode]) {
+      showStatus("Invalid operation. No player or team found.", "danger");
+      return;
+  }
+
+  // Update player's status in Firestore
+  db.collection('players').doc(currentPlayer.id).update({
+      status: 'sold',
+      soldPrice: bidAmount,
+      soldTo: teamCode
+  }).then(() => {
+      console.log(`Player ${currentPlayer.name} sold to ${teams[teamCode].name} for ₹${(bidAmount / 10000000).toFixed(2)} Cr`);
+  }).catch(error => {
+      console.error("Error updating player status:", error);
+      showStatus("Failed to sell player. Try again.", "danger");
+  });
+
+  // Update team's remaining budget in Firestore
+  const newBudget = teams[teamCode].remainingBudget - bidAmount;
+  db.collection('teams').doc(teams[teamCode].id).update({
+      remainingBudget: newBudget
+  }).then(() => {
+      console.log(`Updated budget for team ${teams[teamCode].name}. Remaining budget: ₹${(newBudget / 10000000).toFixed(2)} Cr`);
+  }).catch(error => {
+      console.error("Error updating team budget:", error);
+      showStatus("Failed to update team budget. Try again.", "danger");
+  });
+
+  // Update UI
+  showStatus(`Player ${currentPlayer.name} sold to ${teams[teamCode].name}!`, "success");
+  document.getElementById("soldBadge").classList.remove("d-none");
+  document.getElementById("bidButton").classList.add("btn-success");
+  document.getElementById("bidButton").classList.remove("btn-warning");
+  document.getElementById("bidButton").innerHTML = '<i class="fas fa-check me-2"></i> SOLD';
+
+  // Reset current player
+  currentPlayer = null;
+  updateAuctionUI();
 }
 
 // Initialize when DOM is loaded
