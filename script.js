@@ -11,28 +11,40 @@ if (typeof firebaseConfig === 'undefined') {
 let currentPlayer = null;
 let teams = {};
 
-// Function to start auction for a player
+// Updated startAuctionForPlayer to include error handling
 function startAuctionForPlayer(player) {
-  currentPlayer = {
-    id: player.id,
-    name: player.name,
-    role: player.role,
-    country: player.country,
-    imageUrl: player.imageUrl,
-    basePrice: player.price,
-    highestBid: player.price,
-    highestBidder: "No bids yet",
-    status: "auction"
-  };
+  try {
+    currentPlayer = {
+      id: player.id,
+      name: player.name,
+      role: player.role,
+      country: player.country,
+      imageUrl: player.imageUrl,
+      basePrice: player.price,
+      highestBid: player.price,
+      highestBidder: "No bids yet",
+      status: "auction"
+    };
 
-  // Update Realtime DB
-  rtdb.ref('auction/currentPlayer').set(currentPlayer);
-  rtdb.ref('auction/currentBid').set({
-    highestBid: currentPlayer.highestBid,
-    highestBidder: currentPlayer.highestBidder
-  });
-
-  updateAuctionUI();
+    // Update Realtime DB
+    rtdb.ref('auction/currentPlayer').set(currentPlayer)
+      .then(() => {
+        return rtdb.ref('auction/currentBid').set({
+          highestBid: currentPlayer.highestBid,
+          highestBidder: currentPlayer.highestBidder
+        });
+      })
+      .then(() => {
+        updateAuctionUI();
+      })
+      .catch(error => {
+        console.error("Error updating Realtime Database:", error);
+        alert("Failed to start auction. Please try again.");
+      });
+  } catch (error) {
+    console.error("Error in startAuctionForPlayer:", error);
+    alert("An unexpected error occurred. Please try again.");
+  }
 }
 
 // Function to load teams data
@@ -331,7 +343,7 @@ function initAuctionApp() {
     document.getElementById("bidButton").addEventListener("click", placeBid);
   }
   
-  // Check if we're on the admin page
+  // Updated startAuctionBtn click handler to include error handling
   if (document.getElementById("startAuctionBtn")) {
     document.getElementById("startAuctionBtn").addEventListener("click", () => {
       const playerId = prompt("Enter player ID to auction:");
@@ -341,8 +353,12 @@ function initAuctionApp() {
             if (doc.exists) {
               startAuctionForPlayer({ id: doc.id, ...doc.data() });
             } else {
-              alert("Player not found!");
+              alert("Player not found! Please check the ID and try again.");
             }
+          })
+          .catch(error => {
+            console.error("Error fetching player data:", error);
+            alert("Failed to fetch player data. Please try again.");
           });
       }
     });
