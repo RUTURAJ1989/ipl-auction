@@ -1,262 +1,178 @@
-:root {
-    --primary: #0d6efd;
-    --success: #198754;
-    --danger: #dc3545;
-    --warning: #ffc107;
-    --dark: #212529;
-    --ipl-blue: #1a3e72;
-    --ipl-yellow: #fdb913;
-}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
-    background: linear-gradient(135deg, #0f1b35, #1a3e72);
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f0f8ff;
+    padding: 20px;
 }
 
-.auction-container {
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 20px;
-    border: 3px solid var(--ipl-yellow);
-    box-shadow: 0 0 30px rgba(253, 185, 19, 0.3);
-    backdrop-filter: blur(10px);
-    overflow: hidden;
-    position: relative;
+h1 {
+    color: #e63946;
 }
 
 .player-card {
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    background: rgba(255, 255, 255, 0.1);
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    width: 200px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.player-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(253,185,19,0.1) 0%, rgba(0,0,0,0) 70%);
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.5s;
+button {
+    background: #e63946;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #d62828;
+}
+.player-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px;
+    width: 220px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: inline-block;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .player-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border-color: var(--ipl-yellow);
+    transform: translateY(-10px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
 }
 
-.player-card:hover::before {
-    opacity: 1;
-}
-
-.player-card-small {
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    height: 100%;
-}
-
-.player-card-small:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.bid-button {
-    background: linear-gradient(45deg, var(--ipl-yellow), #ff9800);
-    border: none;
-    font-weight: bold;
-    letter-spacing: 1px;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.bid-button::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
+.player-card img {
     width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg, #ff9800, var(--ipl-yellow));
-    opacity: 0;
-    z-index: -1;
-    transition: opacity 0.3s;
-}
-
-.bid-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(253, 185, 19, 0.5);
-}
-
-.bid-button:hover::after {
-    opacity: 1;
-}
-
-.countdown {
-    font-size: 3rem;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
-    font-family: 'Poppins', sans-serif;
-}
-
-.team-logo {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    transition: all 0.3s;
-    border-radius: 50%;
-    background: white;
-    padding: 5px;
-}
-
-.team-logo:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-}
-
-.team-card {
-    background: rgba(255, 255, 255, 0.05);
-    transition: all 0.3s;
-    height: 100%;
-}
-
-.team-card:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-3px);
-}
-
-.leading-team {
-    border: 2px solid var(--ipl-yellow);
-    background: rgba(253, 185, 19, 0.1) !important;
-    box-shadow: 0 0 15px rgba(253, 185, 19, 0.3);
-}
-
-.bid-history-item {
-    border-left: 3px solid var(--ipl-yellow);
-    transition: all 0.3s;
-    padding: 10px;
+    border-radius: 10px;
     margin-bottom: 10px;
-    background: rgba(0, 0, 0, 0.3);
+}
+
+.player-card h2 {
+    color: #f9c80e;
+    margin: 10px 0;
+}
+
+.player-card p {
+    color: #ddd;
+    margin: 5px 0;
+}
+
+button {
+    background: #e63946;
+    color: white;
+    border: none;
+    padding: 10px 20px;
     border-radius: 5px;
-}
-
-.bid-history-item:hover {
-    background: rgba(253, 185, 19, 0.1);
-    transform: translateX(5px);
-}
-
-.sold-badge {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 10;
-    background: var(--success);
-    padding: 5px 15px;
-    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
     font-weight: bold;
-    transform: rotate(15deg);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    margin-top: 10px;
 }
 
-.hammer {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%) rotate(45deg);
-    font-size: 2.5rem;
-    animation: hammerSwing 3s infinite;
-    transform-origin: top right;
-    color: var(--ipl-yellow);
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+button:hover {
+    background: #ff2d4a;
+}
+.teams-section {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 20px 0;
 }
 
-@keyframes hammerSwing {
-    0%, 70%, 100% { transform: translateY(-50%) rotate(45deg); }
-    80% { transform: translateY(-50%) rotate(-15deg); }
+.team-budget {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
 }
 
-.ipl-logo {
-    height: 80px;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+.team-budget img {
+    width: 40px;
+    margin-right: 10px;
 }
 
-.live-badge {
-    animation: pulse 1.5s infinite;
-    font-size: 1.2rem;
-    padding: 5px 15px;
+.auction-status {
+    background: rgba(249, 200, 46, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 20px 0;
+    border: 1px solid #f9c80e;
+}
+/* Fade-in animation for player cards */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
+.player-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Pulse effect for bid button */
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
 
-/* Modal styles */
-.modal-content {
-    background: rgba(0, 0, 0, 0.9) !important;
-    backdrop-filter: blur(10px);
-    border: 2px solid var(--ipl-yellow);
+button:hover {
+    animation: pulse 1s infinite;
 }
-
-.modal-header {
-    border-bottom: 1px solid rgba(253, 185, 19, 0.3);
-}
-
-.modal-footer {
-    border-top: 1px solid rgba(253, 185, 19, 0.3);
-}
-
-.btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
-}
-
-.form-select, .form-control {
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--ipl-yellow);
-    color: white;
-}
-
-.form-select:focus, .form-control:focus {
-    background-color: rgba(0, 0, 0, 0.7);
-    border-color: var(--ipl-yellow);
-    box-shadow: 0 0 0 0.25rem rgba(253, 185, 19, 0.25);
-    color: white;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-    .ipl-logo {
-        height: 60px;
+    .player-card {
+        width: 100%;
+        margin: 10px 0;
     }
-    
-    .countdown {
-        font-size: 2rem;
+
+    h1 {
+        font-size: 1.8rem;
     }
-    
-    .team-logo {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .player-card img {
-        width: 120px;
-        height: 120px;
-    }
-    
-    .bid-button {
-        padding: 10px 20px;
-        font-size: 1rem;
+
+    .teams-section, .auction-status {
+        padding: 10px;
     }
 }
+.auction-live {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 2px solid #f9c80e;
+  }
+  
+  .current-player {
+    text-align: center;
+  }
+  
+  .current-player h3 {
+    color: #f9c80e;
+    font-size: 1.8rem;
+    margin: 10px 0;
+  }
+  
+  .current-player p {
+    font-size: 1.2rem;
+    margin: 8px 0;
+  }
+  
+  .current-player button {
+    background: #f9c80e;
+    color: #000;
+    font-weight: bold;
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    margin-top: 15px;
+  }
+  
+  .current-player button:hover {
+    background: #ffdf5e;
+  }
