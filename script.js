@@ -43,16 +43,22 @@ function startAuctionForPlayer(player) {
 // Load teams data
 function loadTeams() {
   firestore.collection('teams').onSnapshot(snapshot => {
+    teams = {};
+    const container = document.getElementById("teamsContainer");
+    if (container) container.innerHTML = '';
+    
     snapshot.forEach(doc => {
       const team = doc.data();
+      // Use team.code as the key instead of doc.id
       teams[team.code] = {
+        id: doc.id,
         name: team.name,
         code: team.code,
         budget: team.budget,
         remainingBudget: team.remainingBudget || team.budget,
         logoUrl: team.logoUrl
       };
-    });
+        });
   });
 }
 
@@ -101,23 +107,90 @@ function updateTeamBudgetsUI() {
 // Place a bid (triggered by button click)
 function placeBid() {
   if (!currentPlayer) return;
+    const modalHtml = `
+    <div class="modal fade" id="bidModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+          <div class="modal-header border-0">
+            <h5 class="modal-title">Place Bid</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Select Team</label>
+              <select class="form-select" id="bidTeamSelect">
+                ${Object.values(teams).map(team => `
+                  <option value="${team.code}" 
+                          ${team.remainingBudget <= currentPlayer.highestBid/10000000 ? 'disabled' : ''}>
+                    ${team.name} (₹${(team.remainingBudget/10000000).toFixed(2)} Cr remaining)
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Bid Amount (₹ Crores)</label>
+              <input type="number" class="form-control" id="bidAmount" 
+                     min="${(currentPlayer.highestBid/10000000 + 0.25).toFixed(2)}" 
+                     step="0.25" 
+                     value="${(currentPlayer.highestBid/10000000 + 0.25).toFixed(2)}">
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-warning" id="confirmBidBtn">Place Bid</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+   // Add modal to DOM
+   document.body.insertAdjacentHTML('beforeend', modalHtml);
+   const modal = new bootstrap.Modal(document.getElementById('bidModal'));
+   modal.show();
+ 
+  // Handle confirm bid
+  document.getElementById('confirmBidBtn').addEventListener('click', () => {
+    const teamCode = document.getElementById('bidTeamSelect').value;
+    const bidAmount = parseFloat(document.getElementById('bidAmount').value);
+    const bidAmountInLakhs = bidAmount * 10000000;
+    
+    if (isNaN(bidAmount) || bidAmount <= currentPlayer.highestBid/10000000) {
+      alert(`Bid must be higher than ₹${(currentPlayer.highestBid/10000000).toFixed(2)} Cr`);
+      return;
+    }
+    
+    if (bidAmountInLakhs > teams[teamCode].remainingBudget) {
+      alert(`${teams[teamCode].name} doesn't have enough budget!`);
+      return;
+    }
+    
+    // Update Firebase (real-time sync)
+    database.ref('auction/currentBid').set({
+      highestBid: bidAmountInLakhs,
+      highestBidder: teamCode
+    });
+    
+    // Add to bid history
+    const bidHistoryRef = database.ref('auction/bidHistory').push();
+    bidHistoryRef.set({
+      team: teamCode,
+      amount: bidAmountInLakhs,
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      playerId: currentPlayer.id
+    });
+    
+    // Reset timer
+    resetTimer();
+    
+    modal.hide();
+    document.getElementById('bidModal').remove();
+  });
   
-  const teamName = prompt("Enter your team code (e.g., RCB, MI, CSK):");
-  if (!teamName || !teams[teamName]) {
-    alert("Invalid team code!");
-    return;
-  }
-  
-  const currentBidInCr = currentPlayer.highestBid / 10000000;
-  const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
-  
-  if (isNaN(bidAmountInCr) {
-    alert("Please enter a valid number");
-    return;
-  }
-  
-  const bidAmount = bidAmountInCr * 10000000;
-  
+  // Remove modal when closed
+  document.getElementById('bidModal').addEventListener('hidden.bs.modal', () => {
+    document.getElementById('bidModal').remove();
+  });
+}
   // Check if bid is valid
   if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamName].remainingBudget) {
     // Update Firebase (real-time sync)
@@ -140,7 +213,7 @@ function placeBid() {
   } else {
     alert("Invalid bid! Either too low or exceeds budget.");
   }
-}
+
 
 // Quick bid function
 function quickBid(increment) {
@@ -214,6 +287,37 @@ function sellPlayer() {
     soldPrice: currentPlayer.highestBid,
     soldTo: currentPlayer.highestBidder
   });
+  
+  // Update team's remaining budget if bid was placed
+  if (currentPlayer.highestBidder !== "No bids yet") {
+    const team = teams[currentPlayer.highestBidder];
+    if (team) {
+      const newBudget = team.remainingBudget - currentPlayer.highestBid;
+      
+      firestore.collection('teams').where('code', '==', currentPlayer.highestBidder)
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            doc.ref.update({ remainingBudget: newBudget });
+          });
+        });
+    }
+  }
+  
+  // Update UI
+  document.getElementById("soldBadge").classList.remove("d-none");
+  document.getElementById("bidButton").classList.add("btn-success");
+  document.getElementById("bidButton").classList.remove("btn-warning");
+  document.getElementById("bidButton").textContent = "SOLD";
+  
+  // Play sold animation
+  const playerCard = document.querySelector(".player-card");
+  playerCard.classList.add("animate__animated", "animate__tada");
+  
+  setTimeout(() => {
+    playerCard.classList.remove("animate__animated", "animate__tada");
+  }, 1000);
+}
   
   // Update team's remaining budget
   if (currentPlayer.highestBidder !== "No bids yet") {
