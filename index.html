@@ -744,14 +744,13 @@
         // Load Teams
         async function loadTeams() {
             try {
-                const snapshot = await db.collection('teams')
-                    .orderBy('createdAt', 'desc')
-                    .get();
-                
+                const snapshot = await db.collection('teams').get();
+                console.log("Teams snapshot:", snapshot); // Debugging
                 teamList.innerHTML = '';
-                
+
                 snapshot.forEach(doc => {
                     const team = doc.data();
+                    console.log("Team data:", team); // Debugging
                     teamList.innerHTML += `
                         <tr>
                             <td><img src="${team.logoUrl}" class="team-logo-small"></td>
@@ -774,19 +773,13 @@
         // Load Players
         async function loadPlayers() {
             try {
-                const snapshot = await db.collection('players')
-                    .orderBy('createdAt', 'desc')
-                    .get();
-                
+                const snapshot = await db.collection('players').get();
+                console.log("Players snapshot:", snapshot); // Debugging
                 playerTableBody.innerHTML = '';
-                
+
                 snapshot.forEach(doc => {
                     const player = doc.data();
-                    const statusClass = player.status === 'sold' ? 'status-sold' : 
-                                        player.status === 'auction' ? 'status-auction' : 'status-unsold';
-                    const statusText = player.status === 'sold' ? `SOLD to ${player.soldTo || 'Unknown'}` : 
-                                     player.status === 'auction' ? 'AUCTION' : 'UNSOLD';
-                    
+                    console.log("Player data:", player); // Debugging
                     playerTableBody.innerHTML += `
                         <tr>
                             <td><img src="${player.imageUrl}" class="player-img-small"></td>
@@ -794,7 +787,7 @@
                             <td>${player.role}</td>
                             <td>₹${player.price.toFixed(2)} Cr</td>
                             <td>${player.country}</td>
-                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td>${player.status}</td>
                             <td>
                                 <button class="btn btn-sm btn-warning me-2" onclick="editPlayer('${doc.id}')">Edit</button>
                                 <button class="btn btn-sm btn-danger" onclick="deletePlayer('${doc.id}')">Delete</button>
