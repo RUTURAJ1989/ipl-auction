@@ -7,46 +7,129 @@ const firebaseConfig = {
     storageBucket: "ipl-auction-f62cf.appspot.com",
     messagingSenderId: "1006195476972",
     appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-};
-
-// Initialize Firebase
-let db, rtdb, auth;
-try {
-    firebase.initializeApp(firebaseConfig);
+  };
+  
+  // Initialize Firebase
+  let db, rtdb, auth;
+  try {
+    const app = firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
     rtdb = firebase.database();
     auth = firebase.auth();
     console.log("Firebase initialized successfully");
-} catch (error) {
+    
+    // Initialize application
+    initAuctionApp();
+  } catch (error) {
     console.error("Firebase initialization error:", error);
     showStatus("Failed to connect to server", "danger");
-}
-
-// Application state
-let teams = {};
-let currentPlayer = null;
-let timeLeft = 30;
-let timerInterval = null;
-
-// Load teams data
-function loadTeams() {
-    db.collection('teams').onSnapshot(snapshot => {
-        teams = {};
-        const container = document.getElementById("teamsContainer");
+  }
+  
+  // Application state
+  let currentPlayer = null;
+  let teams = {};
+  let timeLeft = 30;
+  let timerInterval = null;
+  
+  function initAuctionApp() {
+    loadTeams();
+    loadCurrentPlayer();
+    loadNextPlayers();
+    loadBidHistory();
+    
+    // Set up bid button
+    const bidButton = document.getElementById("bidButton");
+    if (bidButton) {
+      bidButton.addEventListener("click", placeBid);
+      bidButton.disabled = false;
+      bidButton.innerHTML = '<i class="fas fa-hand-paper me-2"></i> PLACE BID';
+    }
+  }
+  function loadCurrentPlayer() {
+    rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
+      const player = snapshot.val();
+      if (player) {
+        currentPlayer = player;
+        updateAuctionUI();
+        startTimer();
+      }
+    });
+  }
+  
+  function loadNextPlayers() {
+    db.collection('players')
+      .where('status', '==', 'unsold')
+      .orderBy('price', 'desc')
+      .limit(5)
+      .get()
+      .then(snapshot => {
+        const container = document.getElementById("upNextPlayers");
         if (!container) return;
         
         container.innerHTML = '';
         
         snapshot.forEach(doc => {
-            const team = doc.data();
-            teams[team.code] = {
-                id: doc.id,
-                name: team.name,
-                code: team.code,
-                budget: team.budget,
-                remainingBudget: team.remainingBudget || team.budget,
-                logoUrl: team.logoUrl
-            };
+          const player = doc.data();
+          const playerElement = document.createElement('div');
+          playerElement.className = 'col-md-3 col-6 mb-3';
+          playerElement.innerHTML = `
+            <div class="player-card-small p-3 rounded-3">
+              <img src="${player.imageUrl || 'https://via.placeholder.com/150'}" 
+                   class="img-fluid rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+              <h6 class="mb-1">${player.name}</h6>
+              <small class="d-block mb-1">${player.role}</small>
+              <small class="text-warning fw-bold">₹${(player.price / 10000000).toFixed(2)} Cr</small>
+            </div>
+          `;
+          container.appendChild(playerElement);
+        });
+      })
+      .catch(error => {
+        console.error("Error loading next players:", error);
+        showStatus("Failed to load next players", "danger");
+      });
+  }
+
+// Load teams data
+function loadTeams() {
+    db.collection('teams').onSnapshot(snapshot => {
+      teams = {};
+      const container = document.getElementById("teamsContainer");
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      snapshot.forEach(doc => {
+        const team = doc.data();
+        teams[team.code] = {
+          id: doc.id,
+          name: team.name,
+          code: team.code,
+          budget: team.budget,
+          remainingBudget: team.remainingBudget || team.budget,
+          logoUrl: team.logoUrl
+        };
+        
+        const teamElement = document.createElement('div');
+        teamElement.className = 'col-md-4 mb-3';
+        teamElement.innerHTML = `
+          <div class="team-card p-3 rounded-3">
+            <div class="d-flex align-items-center">
+              <img src="${team.logoUrl}" class="team-logo me-3">
+              <div>
+                <h5 class="mb-1">${team.name}</h5>
+                <p class="mb-0">₹${(team.remainingBudget / 10000000).toFixed(2)} Cr</p>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(teamElement);
+      });
+    }, error => {
+      console.error("Error loading teams:", error);
+      showStatus("Failed to load teams", "danger");
+    });
+  }
             
             const teamElement = document.createElement('div');
             teamElement.className = 'col-md-4 mb-3';
@@ -72,52 +155,94 @@ function loadTeams() {
 // Place a bid
 function placeBid() {
     if (!currentPlayer) {
-        showStatus("No player is currently being auctioned", "warning");
-        return;
+      showStatus("No player is currently being auctioned", "warning");
+      return;
     }
-
+  
     // Create team options dropdown
     let teamOptions = '';
     for (const code in teams) {
-        const team = teams[code];
-        const canBid = team.remainingBudget > currentPlayer.highestBid;
-        teamOptions += `<option value="${code}" ${!canBid ? 'disabled' : ''}>
-            ${team.name} (₹${(team.remainingBudget / 10000000).toFixed(2)} Cr)
-        </option>`;
+      const team = teams[code];
+      const canBid = team.remainingBudget > currentPlayer.highestBid;
+      teamOptions += `<option value="${code}" ${!canBid ? 'disabled' : ''}>
+        ${team.name} (₹${(team.remainingBudget / 10000000).toFixed(2)} Cr)
+      </option>`;
     }
-
+  
     const modalHtml = `
-        <div class="modal fade" id="bidModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content bg-dark text-white">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Place Bid for ${currentPlayer.name}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Select Team</label>
-                            <select class="form-select" id="bidTeamSelect">
-                                ${teamOptions}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Bid Amount (₹ Crores)</label>
-                            <input type="number" class="form-control" id="bidAmount" 
-                                   min="${(currentPlayer.highestBid / 10000000 + 0.25).toFixed(2)}" 
-                                   step="0.25" 
-                                   value="${(currentPlayer.highestBid / 10000000 + 0.25).toFixed(2)}">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-warning" id="confirmBid">Place Bid</button>
-                    </div>
-                </div>
+      <div class="modal fade" id="bidModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+              <h5 class="modal-title">Place Bid for ${currentPlayer.name}</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Select Team</label>
+                <select class="form-select" id="bidTeamSelect">
+                  ${teamOptions}
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Bid Amount (₹ Crores)</label>
+                <input type="number" class="form-control" id="bidAmount" 
+                       min="${(currentPlayer.highestBid / 10000000 + 0.25).toFixed(2)}" 
+                       step="0.25" 
+                       value="${(currentPlayer.highestBid / 10000000 + 0.25).toFixed(2)}">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-warning" id="confirmBid">Place Bid</button>
+            </div>
+          </div>
         </div>
+      </div>
     `;
-
+  
+    // Add modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('bidModal'));
+    modal.show();
+  
+    // Handle confirm bid
+    document.getElementById('confirmBid').addEventListener('click', () => {
+      const teamCode = document.getElementById('bidTeamSelect').value;
+      const bidAmount = parseFloat(document.getElementById('bidAmount').value);
+      const bidAmountInLakhs = bidAmount * 10000000;
+  
+      if (isNaN(bidAmount)) {
+        showStatus("Please enter a valid bid amount", "danger");
+        return;
+      }
+  
+      if (bidAmountInLakhs <= currentPlayer.highestBid) {
+        showStatus(`Bid must be higher than ₹${(currentPlayer.highestBid / 10000000).toFixed(2)} Cr`, "warning");
+        return;
+      }
+  
+      if (!teams[teamCode]) {
+        showStatus("Invalid team selected", "danger");
+        return;
+      }
+  
+      if (bidAmountInLakhs > teams[teamCode].remainingBudget) {
+        showStatus(`${teams[teamCode].name} doesn't have enough budget!`, "danger");
+        return;
+      }
+  
+      // Update bid in Realtime DB
+      rtdb.ref('auction/currentBid').set({
+        highestBid: bidAmountInLakhs,
+        highestBidder: teamCode
+      });
+  
+      resetTimer();
+      modal.hide();
+      document.getElementById('bidModal').remove();
+    });
+  }
     // Add modal to DOM
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('bidModal'));
