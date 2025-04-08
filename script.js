@@ -1,7 +1,11 @@
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const rtdb = firebase.database();
+// Ensure firebaseConfig is referenced as a global variable
+if (typeof firebaseConfig === 'undefined') {
+    console.error('firebaseConfig is not defined. Ensure it is declared in your HTML file.');
+} else {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const rtdb = firebase.database();
+}
 
 // Current player being auctioned
 let currentPlayer = null;
