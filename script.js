@@ -19,10 +19,12 @@ const firebaseConfig = {
     console.log("Firebase initialized successfully");
     
     // Initialize application
+    console.log("Calling initAuctionApp...");
     initAuctionApp();
   } catch (error) {
     console.error("Firebase initialization error:", error);
     showStatus("Failed to connect to server", "danger");
+  }
 
   // Application state
   let currentPlayer = null;
