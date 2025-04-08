@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "colourafredi.vscode-deepseek"
+        "colourafredi.vscode-deepseek",
+        "wassimdev.wassimdev-vscode-deepseek"
     ]
 }
