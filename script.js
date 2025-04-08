@@ -101,51 +101,39 @@ function updateTeamBudgetsUI() {
 
 // Function to place a bid
 function placeBid() {
-  if (!currentPlayer) return;
+    if (!currentPlayer) return;
 
-  // Prompt user for team code
-  let teamCode = prompt("Enter your team code (e.g., RCB, MI, CSK):");
-  if (!teamCode) {
-    alert("Team code is required to place a bid.");
-    return;
-  }
+    const teamSelect = document.getElementById('teamSelect');
+    const teamId = teamSelect.value;
 
-  // Normalize team code (trim spaces and convert to uppercase)
-  teamCode = teamCode.trim().toUpperCase();
+    if (!teamId) {
+        alert('Please select a team to place a bid.');
+        return;
+    }
 
-  // Validate team code
-  if (!teams[teamCode]) {
-    alert("Invalid team code. Please try again.");
-    return;
-  }
+    const currentBidInCr = currentPlayer.highestBid / 10000000;
+    const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
 
-  // Get current bid and prompt for new bid
-  const currentBidInCr = currentPlayer.highestBid / 10000000;
-  const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
+    if (isNaN(bidAmountInCr)) {
+        alert('Invalid bid amount. Please enter a number.');
+        return;
+    }
 
-  // Validate bid amount
-  if (isNaN(bidAmountInCr)) {
-    alert("Invalid bid amount. Please enter a number.");
-    return;
-  }
+    const bidAmount = bidAmountInCr * 10000000;
 
-  const bidAmount = bidAmountInCr * 10000000;
+    if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamId].remainingBudget) {
+        currentPlayer.highestBid = bidAmount;
+        currentPlayer.highestBidder = teamId;
 
-  // Check if bid is valid
-  if (bidAmount > currentPlayer.highestBid && bidAmount <= teams[teamCode].remainingBudget) {
-    currentPlayer.highestBid = bidAmount;
-    currentPlayer.highestBidder = teamCode;
+        rtdb.ref('auction/currentBid').set({
+            highestBid: currentPlayer.highestBid,
+            highestBidder: currentPlayer.highestBidder
+        });
 
-    // Update Realtime DB
-    rtdb.ref('auction/currentBid').set({
-      highestBid: currentPlayer.highestBid,
-      highestBidder: currentPlayer.highestBidder
-    });
-
-    updateAuctionUI();
-  } else {
-    alert("Invalid bid. Ensure it is higher than the current bid and within your budget.");
-  }
+        updateAuctionUI();
+    } else {
+        alert('Invalid bid. Ensure it is higher than the current bid and within your budget.');
+    }
 }
 
 // Quick bid function
@@ -332,6 +320,24 @@ function loadBidHistory() {
   });
 }
 
+// Function to load teams into the dropdown
+function loadTeamsForBidding() {
+    const teamSelect = document.getElementById('teamSelect');
+    teamSelect.innerHTML = '<option value="">Select a team</option>'; // Reset dropdown
+
+    db.collection('teams').get().then(snapshot => {
+        snapshot.forEach(doc => {
+            const team = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id; // Use team ID as value
+            option.textContent = `${team.name} (₹${(team.remainingBudget / 10000000).toFixed(2)} Cr remaining)`;
+            teamSelect.appendChild(option);
+        });
+    }).catch(error => {
+        console.error('Error loading teams:', error);
+    });
+}
+
 // Initialize the app
 function initAuctionApp() {
   loadTeams();
@@ -367,3 +373,4 @@ function initAuctionApp() {
 
 // Initialize when DOM is loaded
 document.addEventListener("DOMContentLoaded", initAuctionApp);
+document.addEventListener('DOMContentLoaded', loadTeamsForBidding);
