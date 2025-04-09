@@ -531,5 +531,56 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="firebase-config.js"></script>
     <script type="module" src="script.js"></script>
+    <script type="module">
+        import { db, rtdb, auth } from './firebase-config.js';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Ensure user is authenticated
+            auth.onAuthStateChanged(user => {
+                if (!user) {
+                    alert("You must be logged in to access live bidding.");
+                    window.location.href = "index.html";
+                }
+            });
+
+            // Initialize live bidding functionality
+            function initLiveBidding() {
+                const currentAuctionStatus = document.getElementById("currentAuctionStatus");
+                const currentPlayerCard = document.getElementById("currentPlayerCard");
+
+                // Monitor current auction status
+                rtdb.ref('auction/currentPlayer').on('value', snapshot => {
+                    const player = snapshot.val();
+                    if (player) {
+                        currentAuctionStatus.textContent = `Auction in progress for ${player.name}`;
+                        currentAuctionStatus.className = 'alert alert-warning';
+
+                        // Update current player card
+                        document.getElementById("currentAuctionPlayerName").textContent = player.name;
+                        document.getElementById("currentAuctionPlayerImage").src = player.imageUrl || "assets/default-player.png";
+                        document.getElementById("currentAuctionPlayerRole").textContent = player.role;
+                        document.getElementById("currentAuctionPlayerCountry").textContent = player.country;
+                        document.getElementById("currentAuctionPlayerPrice").textContent = (player.basePrice / 10000000).toFixed(2);
+                        document.getElementById("currentAuctionPlayerBid").textContent = (player.highestBid / 10000000).toFixed(2);
+                        document.getElementById("currentAuctionPlayerBidder").textContent = player.highestBidder;
+                    } else {
+                        currentAuctionStatus.textContent = "No active auction";
+                        currentAuctionStatus.className = 'alert alert-info';
+
+                        // Reset current player card
+                        document.getElementById("currentAuctionPlayerName").textContent = "No player selected";
+                        document.getElementById("currentAuctionPlayerImage").src = "assets/default-player.png";
+                        document.getElementById("currentAuctionPlayerRole").textContent = "Role";
+                        document.getElementById("currentAuctionPlayerCountry").textContent = "Country";
+                        document.getElementById("currentAuctionPlayerPrice").textContent = "0.00";
+                        document.getElementById("currentAuctionPlayerBid").textContent = "0.00";
+                        document.getElementById("currentAuctionPlayerBidder").textContent = "None";
+                    }
+                });
+            }
+
+            initLiveBidding();
+        });
+    </script>
 </body>
 </html>
