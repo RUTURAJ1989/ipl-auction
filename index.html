@@ -651,10 +651,6 @@
         // Add Team
         teamForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            addTeam();
-        });
-
-        async function addTeam() {
             try {
                 const name = document.getElementById('teamName').value;
                 const code = document.getElementById('teamCode').value.toUpperCase();
@@ -691,15 +687,11 @@
                 console.error('Error adding team:', error);
                 alert('Failed to add team. Please try again.');
             }
-        }
+        });
 
         // Add Player
         playerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            addPlayer();
-        });
-
-        async function addPlayer() {
             try {
                 const name = document.getElementById('playerName').value;
                 const role = document.getElementById('playerRole').value;
@@ -734,12 +726,11 @@
                 playerForm.reset();
                 playerImagePreview.src = 'https://via.placeholder.com/150';
                 loadPlayers();
-                loadUnsoldPlayersForAuction();
             } catch (error) {
                 console.error('Error adding player:', error);
                 alert('Failed to add player. Please try again.');
             }
-        }
+        });
 
         // Load Teams
         async function loadTeams() {

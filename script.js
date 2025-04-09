@@ -5,6 +5,7 @@ if (typeof firebaseConfig === 'undefined') {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const rtdb = firebase.database();
+    const storage = firebase.storage();
 }
 
 // Current player being auctioned
@@ -336,6 +337,29 @@ function loadTeamsForBidding() {
     }).catch(error => {
         console.error('Error loading teams:', error);
     });
+}
+
+// Initialize Firebase Storage
+const storage = firebase.storage();
+
+// Function to upload a file to Firebase Storage
+async function uploadFile(file, path) {
+    try {
+        const storageRef = storage.ref(path);
+        const snapshot = await storageRef.put(file);
+        return await snapshot.ref.getDownloadURL();
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        throw new Error('File upload failed');
+    }
+}
+
+// Example usage in forms
+async function handleTeamLogoUpload(file) {
+    if (file) {
+        return await uploadFile(file, `team_logos/${file.name}_${Date.now()}`);
+    }
+    return 'https://via.placeholder.com/100';
 }
 
 // Initialize the app
