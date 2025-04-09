@@ -1,15 +1,6 @@
+import { db, rtdb, auth, storage } from './firebase-config.js';
+
 document.addEventListener("DOMContentLoaded", () => {
-    // Ensure firebaseConfig is defined
-    if (typeof firebaseConfig === 'undefined') {
-        console.error('firebaseConfig is not defined. Ensure it is declared in your HTML file.');
-        return;
-    }
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const rtdb = firebase.database();
-    const storage = firebase.storage();
-
     // Current player being auctioned
     let currentPlayer = null;
     let teams = {};
@@ -76,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const highestBidderElem = document.getElementById("highestBidder");
 
         if (playerNameElem) playerNameElem.textContent = currentPlayer.name;
-        if (playerImageElem) playerImageElem.src = currentPlayer.imageUrl || "https://via.placeholder.com/150";
+        if (playerImageElem) playerImageElem.src = currentPlayer.imageUrl || "assets/default-player.png";
         if (playerRoleElem) playerRoleElem.textContent = currentPlayer.role;
         if (playerCountryElem) playerCountryElem.textContent = currentPlayer.country;
         if (basePriceElem) basePriceElem.textContent = (currentPlayer.basePrice / 10000000).toFixed(2);
@@ -410,8 +401,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         }
+
+        loadTeamsForBidding();
     }
 
     initAuctionApp();
-    loadTeamsForBidding();
 });
