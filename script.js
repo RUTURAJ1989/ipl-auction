@@ -345,7 +345,14 @@ async function uploadFile(file, path) {
         return await snapshot.ref.getDownloadURL();
     } catch (error) {
         console.error('Error uploading file:', error);
-        throw new Error('File upload failed');
+        if (error.code === 'storage/unauthorized') {
+            alert('You do not have permission to upload files.');
+        } else if (error.code === 'storage/cors') {
+            alert('CORS policy error. Please check your Firebase Storage CORS configuration.');
+        } else {
+            alert('File upload failed. Please try again.');
+        }
+        throw error;
     }
 }
 
