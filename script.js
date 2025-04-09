@@ -67,13 +67,21 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateAuctionUI() {
         if (!currentPlayer) return;
 
-        document.getElementById("currentPlayerName").textContent = currentPlayer.name;
-        document.getElementById("currentPlayerImage").src = currentPlayer.imageUrl || "https://via.placeholder.com/150";
-        document.getElementById("playerRole").textContent = currentPlayer.role;
-        document.getElementById("playerCountry").textContent = currentPlayer.country;
-        document.getElementById("basePrice").textContent = (currentPlayer.basePrice / 10000000).toFixed(2);
-        document.getElementById("currentBid").textContent = (currentPlayer.highestBid / 10000000).toFixed(2);
-        document.getElementById("highestBidder").textContent = currentPlayer.highestBidder;
+        const playerNameElem = document.getElementById("currentPlayerName");
+        const playerImageElem = document.getElementById("currentPlayerImage");
+        const playerRoleElem = document.getElementById("playerRole");
+        const playerCountryElem = document.getElementById("playerCountry");
+        const basePriceElem = document.getElementById("basePrice");
+        const currentBidElem = document.getElementById("currentBid");
+        const highestBidderElem = document.getElementById("highestBidder");
+
+        if (playerNameElem) playerNameElem.textContent = currentPlayer.name;
+        if (playerImageElem) playerImageElem.src = currentPlayer.imageUrl || "https://via.placeholder.com/150";
+        if (playerRoleElem) playerRoleElem.textContent = currentPlayer.role;
+        if (playerCountryElem) playerCountryElem.textContent = currentPlayer.country;
+        if (basePriceElem) basePriceElem.textContent = (currentPlayer.basePrice / 10000000).toFixed(2);
+        if (currentBidElem) currentBidElem.textContent = (currentPlayer.highestBid / 10000000).toFixed(2);
+        if (highestBidderElem) highestBidderElem.textContent = currentPlayer.highestBidder;
 
         updateTeamBudgetsUI();
     }
