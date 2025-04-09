@@ -1,4 +1,3 @@
-// filepath: /workspaces/ipl-auction/firebase-config.js
 firebase.initializeApp({
     apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0", 
     authDomain: "ipl-auction-f62cf.firebaseapp.com",
