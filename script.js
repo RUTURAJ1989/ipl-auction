@@ -102,15 +102,13 @@ function updateTeamBudgetsUI() {
 
 // Function to place a bid
 function placeBid() {
-    if (!currentPlayer) return;
-
-    const teamSelect = document.getElementById('teamSelect');
-    const teamId = teamSelect.value;
-
+    const teamId = document.getElementById('teamSelect').value;
     if (!teamId) {
         alert('Please select a team to place a bid.');
         return;
     }
+
+    if (!currentPlayer) return;
 
     const currentBidInCr = currentPlayer.highestBid / 10000000;
     const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
