@@ -1,6 +1,6 @@
 // filepath: /workspaces/ipl-auction/firebase-config.js
 firebase.initializeApp({
-    apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0", // Replace with the new API key
+    apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0", 
     authDomain: "ipl-auction-f62cf.firebaseapp.com",
     databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "ipl-auction-f62cf",
