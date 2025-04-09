@@ -337,9 +337,6 @@ function loadTeamsForBidding() {
     });
 }
 
-// Initialize Firebase Storage
-const storage = firebase.storage();
-
 // Function to upload a file to Firebase Storage
 async function uploadFile(file, path) {
     try {
