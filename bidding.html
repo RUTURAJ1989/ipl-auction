@@ -532,16 +532,30 @@
     <script type="module" src="firebase-config.js"></script>
     <script type="module" src="script.js"></script>
     <script type="module">
-        import { db, rtdb, auth } from './firebase-config.js';
+        import { auth } from './firebase-config.js';
 
         document.addEventListener("DOMContentLoaded", () => {
             // Ensure user is authenticated
             auth.onAuthStateChanged(user => {
                 if (!user) {
                     alert("You must be logged in to access live bidding.");
-                    window.location.href = "index.html";
+                    window.location.href = "login.html";
                 }
             });
+
+            // Logout functionality
+            const logoutBtn = document.getElementById("logoutBtn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", () => {
+                    auth.signOut().then(() => {
+                        alert("You have been logged out.");
+                        window.location.href = "login.html";
+                    }).catch(error => {
+                        console.error("Error logging out:", error);
+                        alert("Failed to log out. Please try again.");
+                    });
+                });
+            }
 
             // Initialize live bidding functionality
             function initLiveBidding() {

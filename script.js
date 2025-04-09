@@ -1,6 +1,28 @@
 import { db, rtdb, auth, storage } from './firebase-config.js';
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Redirect to login if user is not authenticated
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            alert("You must be logged in to access this page.");
+            window.location.href = "login.html"; // Redirect to login page
+        }
+    });
+
+    // Logout functionality
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                alert("You have been logged out.");
+                window.location.href = "login.html"; // Redirect to login page
+            }).catch(error => {
+                console.error("Error logging out:", error);
+                alert("Failed to log out. Please try again.");
+            });
+        });
+    }
+
     // Current player being auctioned
     let currentPlayer = null;
     let teams = {};

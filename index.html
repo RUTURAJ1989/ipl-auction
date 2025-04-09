@@ -586,5 +586,32 @@
             appId: "1:1006195476972:web:6343541fb0007925ded8c9"
         };
     </script>
+    <script type="module">
+        import { auth } from './firebase-config.js';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Ensure user is authenticated
+            auth.onAuthStateChanged(user => {
+                if (!user) {
+                    alert("You must be logged in to access the admin panel.");
+                    window.location.href = "login.html";
+                }
+            });
+
+            // Logout functionality
+            const logoutBtn = document.getElementById("logoutBtn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", () => {
+                    auth.signOut().then(() => {
+                        alert("You have been logged out.");
+                        window.location.href = "login.html";
+                    }).catch(error => {
+                        console.error("Error logging out:", error);
+                        alert("Failed to log out. Please try again.");
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
