@@ -24,7 +24,8 @@ jobs:
           APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
         run: |
-          cat > firebase-config.js <<EOF
+          mkdir -p js/
+          cat > js/firebase-config.js <<EOF
           const firebaseConfig = {
             apiKey: "$API_KEY",
             authDomain: "$AUTH_DOMAIN",
@@ -35,11 +36,11 @@ jobs:
             appId: "$APP_ID"
           };
           EOF
-          mv firebase-config.js public/js/
       
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: './public'
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only hosting

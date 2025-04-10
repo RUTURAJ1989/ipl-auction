@@ -603,6 +603,27 @@
 
             initLiveBidding();
         });
+
+        document.getElementById("startAuctionBtn").addEventListener("click", () => {
+            const playerId = prompt("Enter player ID to auction:");
+            if (playerId) {
+                if (!confirm("Are you sure you want to start the auction for this player?")) {
+                    return;
+                }
+                db.collection('players').doc(playerId).get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            startAuctionForPlayer({ id: doc.id, ...doc.data() });
+                        } else {
+                            alert("Player not found! Please check the ID and try again.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching player data:", error);
+                        alert("Failed to fetch player data. Please try again.");
+                    });
+            }
+        });
     </script>
 </body>
 </html>

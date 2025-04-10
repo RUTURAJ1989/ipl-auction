@@ -113,7 +113,9 @@ document.addEventListener("DOMContentLoaded", () => {
             teamElement.className = 'team-card';
             teamElement.innerHTML = `
                 <div class="d-flex align-items-center">
-                    <img src="${team.logoUrl}" class="team-logo me-3">
+                    <img src="${team.logoUrl || 'https://via.placeholder.com/100'}" 
+                         onerror="this.src='https://via.placeholder.com/100'" 
+                         class="team-logo me-3">
                     <div>
                         <h6 class="mb-1">${team.name}</h6>
                         <small class="text-muted">₹${(team.remainingBudget / 10000000).toFixed(2)} Cr remaining</small>

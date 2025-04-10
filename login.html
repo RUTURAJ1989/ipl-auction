@@ -78,7 +78,7 @@
                             <label for="password" class="form-label">Password</label>
                             <input type="password" class="form-control" id="password" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2">
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="loginButton">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
                     </form>
@@ -94,18 +94,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <script>
-        // Add Firebase configuration to ensure firebaseConfig is defined
-        const firebaseConfig = {
-            apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
-            authDomain: "ipl-auction-f62cf.firebaseapp.com",
-            databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "ipl-auction-f62cf",
-            storageBucket: "ipl-auction-f62cf.appspot.com",
-            messagingSenderId: "1006195476972",
-            appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-        };
-
-        // Ensure Firebase configuration is correctly initialized
+           // Ensure Firebase configuration is correctly initialized
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -115,6 +104,10 @@
         // Improved error handling for login
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
+            const loginButton = document.getElementById('loginButton');
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Logging in...';
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
@@ -125,6 +118,10 @@
                 .catch(error => {
                     console.error("Login failed:", error);
                     alert("Login failed: " + error.message);
+                })
+                .finally(() => {
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Login';
                 });
         });
 

@@ -1,10 +1,10 @@
-// Ensure Firebase configuration is exported correctly
+// Template file - this will be used to generate the actual config
 export const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-auth-domain",
-  databaseURL: "your-database-url",
-  projectId: "your-project-id",
-  storageBucket: "your-storage-bucket",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "${FIREBASE_API_KEY}",
+  authDomain: "${FIREBASE_AUTH_DOMAIN}",
+  databaseURL: "${FIREBASE_DATABASE_URL}",
+  projectId: "${FIREBASE_PROJECT_ID}",
+  storageBucket: "${FIREBASE_STORAGE_BUCKET}",
+  messagingSenderId: "${FIREBASE_MESSAGING_SENDER_ID}",
+  appId: "${FIREBASE_APP_ID}"
 };
