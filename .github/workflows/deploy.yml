@@ -1,0 +1,38 @@
+name: Deploy with Firebase Secrets
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build with environment variables
+        env:
+          apiKey: ${{ secrets.APIKEY }}
+          authDomain: ${{ secrets.authDomain }}
+          projectId: ${{ secrets.projectId }}
+          storageBucket: ${{ secrets.storageBucket }}
+          messagingSenderId: ${{ secrets.messagingSenderId }}
+          appId: ${{ secrets.appId }}
+
+          # Add all other variables
+        run: |
+          echo "const firebaseConfig = {
+            apiKey: '$apiKey',
+            authDomain: '$authDomain',
+            projectId: '$projectId',
+            storageBucket: '$storageBucket',
+            messagingSenderId: '$messagingSenderId',
+            appId: '$appId'
+          };" > src/firebase-config.js
+          npm run build
+          
