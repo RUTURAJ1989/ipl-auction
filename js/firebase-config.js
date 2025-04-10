@@ -1,4 +1,5 @@
-const firebaseConfig = {
+// Ensure Firebase configuration is exported correctly
+export const firebaseConfig = {
   apiKey: "your-api-key",
   authDomain: "your-auth-domain",
   databaseURL: "your-database-url",

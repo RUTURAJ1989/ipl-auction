@@ -105,21 +105,25 @@
             appId: "1:1006195476972:web:6343541fb0007925ded8c9"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Ensure Firebase configuration is correctly initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
         const auth = firebase.auth();
 
-        // Login form handler
+        // Improved error handling for login
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
+
             auth.signInWithEmailAndPassword(email, password)
                 .then(() => {
                     window.location.href = "index.html"; // Redirect to admin panel after login
                 })
                 .catch(error => {
+                    console.error("Login failed:", error);
                     alert("Login failed: " + error.message);
                 });
         });

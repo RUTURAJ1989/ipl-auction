@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
@@ -13,27 +12,6 @@ h1 {
 }
 
 .player-card {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px auto;
-    width: 200px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-button {
-    background: #e63946;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #d62828;
-}
-.player-card {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     padding: 20px;
@@ -44,6 +22,7 @@ button:hover {
     display: inline-block;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.5s ease-out;
 }
 
 .player-card:hover {
@@ -81,7 +60,9 @@ button {
 
 button:hover {
     background: #ff2d4a;
+    animation: none;
 }
+
 .teams-section {
     background: rgba(0, 0, 0, 0.3);
     padding: 15px;
@@ -107,14 +88,11 @@ button:hover {
     margin: 20px 0;
     border: 1px solid #f9c80e;
 }
+
 /* Fade-in animation for player cards */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.player-card {
-    animation: fadeIn 0.5s ease-out;
 }
 
 /* Pulse effect for bid button */
@@ -124,9 +102,6 @@ button:hover {
     100% { transform: scale(1); }
 }
 
-button:hover {
-    animation: pulse 1s infinite;
-}
 @media (max-width: 768px) {
     .player-card {
         width: 100%;
@@ -141,38 +116,39 @@ button:hover {
         padding: 10px;
     }
 }
+
 .auction-live {
     background: rgba(0, 0, 0, 0.5);
     border-radius: 15px;
     padding: 20px;
     margin: 20px 0;
     border: 2px solid #f9c80e;
-  }
-  
-  .current-player {
+}
+
+.current-player {
     text-align: center;
-  }
-  
-  .current-player h3 {
+}
+
+.current-player h3 {
     color: #f9c80e;
     font-size: 1.8rem;
     margin: 10px 0;
-  }
-  
-  .current-player p {
+}
+
+.current-player p {
     font-size: 1.2rem;
     margin: 8px 0;
-  }
-  
-  .current-player button {
+}
+
+.current-player button {
     background: #f9c80e;
     color: #000;
     font-weight: bold;
     padding: 12px 25px;
     font-size: 1.1rem;
     margin-top: 15px;
-  }
-  
-  .current-player button:hover {
+}
+
+.current-player button:hover {
     background: #ffdf5e;
-  }
+}

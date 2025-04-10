@@ -45,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Update Realtime DB
             rtdb.ref('auction/currentPlayer').set(currentPlayer)
                 .then(() => {
+                    console.log("Current player updated successfully.");
                     return rtdb.ref('auction/currentBid').set({
                         highestBid: currentPlayer.highestBid,
                         highestBidder: currentPlayer.highestBidder
@@ -399,8 +400,11 @@ document.addEventListener("DOMContentLoaded", () => {
         loadBidHistory();
 
         // Check if we're on the bidding page
-        if (document.getElementById("bidButton")) {
-            document.getElementById("bidButton").addEventListener("click", placeBid);
+        const bidButton = document.getElementById("bidButton");
+        if (bidButton) {
+            bidButton.addEventListener("click", placeBid);
+        } else {
+            console.warn("Bid button not found.");
         }
 
         // Updated startAuctionBtn click handler to include error handling

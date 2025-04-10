@@ -562,8 +562,13 @@
                 const currentAuctionStatus = document.getElementById("currentAuctionStatus");
                 const currentPlayerCard = document.getElementById("currentPlayerCard");
 
+                // Ensure Firebase configuration is correctly initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+
                 // Monitor current auction status
-                rtdb.ref('auction/currentPlayer').on('value', snapshot => {
+                rtdb.ref('auction/currentPlayer').on('value', (snapshot) => {
                     const player = snapshot.val();
                     if (player) {
                         currentAuctionStatus.textContent = `Auction in progress for ${player.name}`;
@@ -578,6 +583,7 @@
                         document.getElementById("currentAuctionPlayerBid").textContent = (player.highestBid / 10000000).toFixed(2);
                         document.getElementById("currentAuctionPlayerBidder").textContent = player.highestBidder;
                     } else {
+                        console.warn("No active auction");
                         currentAuctionStatus.textContent = "No active auction";
                         currentAuctionStatus.className = 'alert alert-info';
 
@@ -590,6 +596,8 @@
                         document.getElementById("currentAuctionPlayerBid").textContent = "0.00";
                         document.getElementById("currentAuctionPlayerBidder").textContent = "None";
                     }
+                }, (error) => {
+                    console.error("Error fetching current player:", error);
                 });
             }
 
