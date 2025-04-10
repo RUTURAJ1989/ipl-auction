@@ -1,13 +1,13 @@
 if (!firebase.apps.length) {
     firebase.initializeApp({
         const firebaseConfig = {
-            apiKey: process.env.APIKEY,
-            authDomain: process.env.AUTHDOMAIN,
-            databaseURL: process.env.DATABASEURL,
-            projectId: process.env.PROJECTID,
-            storageBucket: process.env.STORAGEBUCKET,
-            messagingSenderId: process.env.MESSAGINGSENDER_ID,
-            appId: process.env.APPID
+            apiKey: process.env.apiKey,
+            authDomain: process.env.authDomain,
+            databaseURL: process.env.databaseURL,
+            projectId: process.env.projectId,
+            storageBucket: process.env.storageBucket,
+            messagingSenderId: process.env.messagingSenderId,
+            appId: process.env.appId
           };
     });
 }
