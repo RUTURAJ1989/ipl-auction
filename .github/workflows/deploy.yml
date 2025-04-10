@@ -19,7 +19,7 @@ jobs:
         run: npm ci  # Use ci for cleaner installs
 
       - name: Create Firebase config
-        env:
+        env: 
           FIREBASE_API_KEY: ${{ secrets.apiKey }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.authDomain }}
           FIREBASE_PROJECT_ID: ${{ secrets.projectId }}
