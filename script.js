@@ -1,18 +1,10 @@
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyCdimEpxhfYQkmaJuWUjhegu227c-rhfY0",
-  authDomain: "ipl-auction-f62cf.firebaseapp.com",
-  databaseURL: "https://ipl-auction-f62cf-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ipl-auction-f62cf",
-  storageBucket: "ipl-auction-f62cf.appspot.com",
-  messagingSenderId: "1006195476972",
-  appId: "1:1006195476972:web:6343541fb0007925ded8c9"
-};
+import { db, rtdb, auth } from './src/firebase.js';
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const rtdb = firebase.database();
+// Remove the Firebase initialization code as it's already handled in src/firebase.js
+
+// Replace direct Firebase references with imported instances
+const database = rtdb;
+const firestore = db;
 
 // Current player being auctioned
 let currentPlayer = null;
