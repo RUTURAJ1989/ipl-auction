@@ -1,5 +1,11 @@
 import { db, rtdb, auth, storage } from './firebase-config.js';
 
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+} else {
+    console.warn("Firebase already initialized.");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     // Redirect to login if user is not authenticated
     auth.onAuthStateChanged(user => {
