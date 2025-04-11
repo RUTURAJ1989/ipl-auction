@@ -1,4 +1,5 @@
 import { db, rtdb, auth, storage } from './firebase-config.js';
+import { firebaseConfig } from './js/firebase-config.js';
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
