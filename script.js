@@ -10,6 +10,15 @@ const firestore = db;
 let currentPlayer = null;
 let teams = {};
 
+// Ensure the object is not null or undefined before using Object.entries
+function safeObjectEntries(obj) {
+    if (!obj || typeof obj !== 'object') {
+        console.warn('Invalid object passed to Object.entries:', obj);
+        return [];
+    }
+    return Object.entries(obj);
+}
+
 // Function to start auction for a player
 function startAuctionForPlayer(player) {
   currentPlayer = {
@@ -71,8 +80,8 @@ function updateTeamBudgetsUI() {
   
   teamsContainer.innerHTML = '';
   
-  for (const teamCode in teams) {
-    const team = teams[teamCode];
+  const teamEntries = safeObjectEntries(teams);
+  teamEntries.forEach(([teamCode, team]) => {
     const teamElement = document.createElement('div');
     teamElement.className = 'col-md-4 mb-3';
     teamElement.innerHTML = `
@@ -87,7 +96,7 @@ function updateTeamBudgetsUI() {
       </div>
     `;
     teamsContainer.appendChild(teamElement);
-  }
+  });
 }
 
 // Place a bid (triggered by button click)
