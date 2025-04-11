@@ -103,7 +103,7 @@ function placeBid() {
   const currentBidInCr = currentPlayer.highestBid / 10000000;
   const bidAmountInCr = Number(prompt(`Enter your bid (current: ₹${currentBidInCr.toFixed(2)} Cr):`));
   
-  if (isNaN(bidAmountInCr) {
+  if (isNaN(bidAmountInCr)) {
     alert("Please enter a valid number");
     return;
   }
