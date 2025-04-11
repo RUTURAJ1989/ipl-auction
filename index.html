@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Auction Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --dark: #212529;
+            --ipl-blue: #1a3e72;
+            --ipl-yellow: #fdb913;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .sidebar {
+            background: var(--ipl-blue);
+            color: white;
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background: var(--ipl-yellow);
+            color: var(--ipl-blue);
+            font-weight: 600;
+        }
+        
+        .logo-preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .csv-upload {
+            border: 2px dashed rgba(253, 185, 19, 0.5);
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            background: rgba(253, 185, 19, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .csv-upload:hover {
+            background: rgba(253, 185, 19, 0.1);
+            border-color: var(--ipl-yellow);
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(253, 185, 19, 0.3);
+        }
+        
+        .team-logo-small {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 3px;
+        }
+        
+        .player-img-small {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid rgba(253, 185, 19, 0.5);
+        }
+        
+        .card-header {
+            font-weight: 600;
+            background: var(--ipl-blue) !important;
+            color: white !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--ipl-blue);
+            border-color: var(--ipl-blue);
+        }
+        
+        .btn-outline-primary {
+            color: var(--ipl-blue);
+            border-color: var(--ipl-blue);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--ipl-blue);
+            color: white;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--ipl-yellow);
+            box-shadow: 0 0 0 0.25rem rgba(253, 185, 19, 0.25);
+        }
+        
+        .table th {
+            background: var(--ipl-blue);
+            color: white;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(253, 185, 19, 0.1);
+        }
+        
+        .btn-warning {
+            background-color: var(--ipl-yellow);
+            border-color: var(--ipl-yellow);
+            color: var(--ipl-blue);
+            font-weight: 600;
+        }
+        
+        .btn-outline-warning {
+            color: var(--ipl-yellow);
+            border-color: var(--ipl-yellow);
+        }
+        
+        .btn-outline-warning:hover {
+            background-color: var(--ipl-yellow);
+            color: var(--ipl-blue);
+        }
+        
+        .start-auction-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(253, 185, 19, 0.5);
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-unsold {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+        
+        .status-sold {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: var(--success);
+        }
+        
+        .status-auction {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Animation classes */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+            
+            .admin-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .start-auction-btn {
+                position: static;
+                width: 100%;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-3">
+                    <h3 class="text-center mb-4 mt-3">
+                        <i class="fas fa-cricket me-2"></i> IPL Auction
+                    </h3>
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#teams" data-bs-toggle="pill">
+                                <i class="fas fa-users me-2"></i> Teams
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#players" data-bs-toggle="pill">
+                                <i class="fas fa-user me-2"></i> Players
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#bulk-upload" data-bs-toggle="pill">
+                                <i class="fas fa-file-csv me-2"></i> Bulk Upload
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#live-auction" data-bs-toggle="pill">
+                                <i class="fas fa-gavel me-2"></i> Live Auction
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 pt-3 border-top">
+                        <button id="logoutBtn" class="btn btn-outline-light w-100">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="admin-header">
+                    <h2 class="fw-bold text-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+                    </h2>
+                    <a href="bidding.html" class="btn btn-danger">
+                        <i class="fas fa-tv me-2"></i> Go to Live Bidding
+                    </a>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Teams Tab -->
+                    <div class="tab-pane fade show active" id="teams">
+                        <div class="card mb-4 animate-fade-in">
+                            <div class="card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-plus-circle me-2"></i>Add New Team
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <form id="teamForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Team Name</label>
+                                                <input type="text" class="form-control" id="teamName" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Short Code (e.g., RCB)</label>
+                                                <input type="text" class="form-control" id="teamCode" maxlength="3" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Total Budget (in Crores)</label>
+                                                <input type="number" class="form-control" id="teamBudget" min="50" max="100" value="80" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Team Logo</label>
+                                                <input type="file" class="form-control" id="teamLogo" accept="image/*">
+                                                <div class="mt-2">
+                                                    <img id="logoPreview" src="https://via.placeholder.com/100" class="logo-preview">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Team
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card animate-fade-in">
+                            <div class="card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-list me-2"></i>Team List
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Logo</th>
+                                                <th>Team</th>
+                                                <th>Code</th>
+                                                <th>Budget</th>
+                                                <th>Remaining</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="teamList">
+                                            <!-- Teams will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Players Tab -->
+                    <div class="tab-pane fade" id="players">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-plus-circle me-2"></i>Add New Player
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <form id="playerForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Player Name</label>
+                                                <input type="text" class="form-control" id="playerName" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Role</label>
+                                                <select class="form-select" id="playerRole" required>
+                                                    <option value="batsman">Batsman</option>
+                                                    <option value="bowler">Bowler</option>
+                                                    <option value="all-rounder">All-Rounder</option>
+                                                    <option value="wicketkeeper">Wicketkeeper</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Base Price (in Crores)</label>
+                                                <input type="number" class="form-control" id="playerPrice" min="0.2" max="10" step="0.1" value="1" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Country</label>
+                                                <input type="text" class="form-control" id="playerCountry" value="India">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Player Image</label>
+                                                <input type="file" class="form-control" id="playerImage" accept="image/*">
+                                                <div class="mt-2">
+                                                    <img id="playerImagePreview" src="https://via.placeholder.com/150" class="logo-preview">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Player
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-list me-2"></i>Player List
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Image</th>
+                                                <th>Name</th>
+                                                <th>Role</th>
+                                                <th>Price</th>
+                                                <th>Country</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="playerTableBody">
+                                            <!-- Players will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Upload Tab -->
+                    <div class="tab-pane fade" id="bulk-upload">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header bg-info text-white">
+                                        <h4 class="mb-0">
+                                            <i class="fas fa-users me-2"></i>Bulk Upload Teams
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="csv-upload">
+                                            <i class="fas fa-file-csv fa-3x mb-3 text-info"></i>
+                                            <h5>Upload Teams CSV</h5>
+                                            <p class="text-muted">Format: Name,Code,Budget,LogoURL</p>
+                                            <input type="file" id="teamsCsv" accept=".csv" class="form-control">
+                                            <button id="uploadTeamsBtn" class="btn btn-info mt-3">
+                                                <i class="fas fa-upload me-2"></i>Upload Teams
+                                            </button>
+                                        </div>
+                                        <button id="downloadTeamsSample" class="btn btn-outline-info mt-2">
+                                            <i class="fas fa-download me-2"></i>Download Sample CSV
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h4 class="mb-0">
+                                            <i class="fas fa-user me-2"></i>Bulk Upload Players
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="csv-upload">
+                                            <i class="fas fa-file-csv fa-3x mb-3 text-info"></i>
+                                            <h5>Upload Players CSV</h5>
+                                            <p class="text-muted">Format: Name,Role,Price,Country,ImageURL</p>
+                                            <input type="file" id="playersCsv" accept=".csv" class="form-control">
+                                            <button id="uploadPlayersBtn" class="btn btn-info mt-3">
+                                                <i class="fas fa-upload me-2"></i>Upload Players
+                                            </button>
+                                        </div>
+                                        <button id="downloadPlayersSample" class="btn btn-outline-info mt-2">
+                                            <i class="fas fa-download me-2"></i>Download Sample CSV
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Auction Control Tab -->
+                    <div class="tab-pane fade" id="live-auction">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-gavel me-2"></i>Live Auction Control
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h5>Current Auction Status</h5>
+                                            <div id="currentAuctionStatus" class="alert alert-info">
+                                                No active auction
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h5>Start Auction for Player</h5>
+                                            <div class="input-group mb-3">
+                                                <select class="form-select" id="playerSelect">
+                                                    <option value="">Select a player</option>
+                                                </select>
+                                                <button id="startAuctionBtn" class="btn btn-warning">
+                                                    <i class="fas fa-play me-2"></i>Start
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h5>Current Player Being Auctioned</h5>
+                                            <div id="currentPlayerCard" class="card">
+                                                <div class="card-body text-center">
+                                                    <img id="currentAuctionPlayerImage" src="https://via.placeholder.com/150" 
+                                                         class="img-fluid rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                                                    <h5 id="currentAuctionPlayerName">No player selected</h5>
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <span id="currentAuctionPlayerRole" class="badge bg-info me-2">Role</span>
+                                                        <span id="currentAuctionPlayerCountry" class="badge bg-secondary">Country</span>
+                                                    </div>
+                                                    <p class="mb-1">Base Price: ₹<span id="currentAuctionPlayerPrice">0.00</span> Cr</p>
+                                                    <p class="mb-1">Current Bid: ₹<span id="currentAuctionPlayerBid">0.00</span> Cr</p>
+                                                    <p class="mb-1">Leading Bidder: <span id="currentAuctionPlayerBidder">None</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h5>Bid History</h5>
+                                        <div id="adminBidHistory" class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Time</th>
+                                                        <th>Team</th>
+                                                        <th>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Bid history will be loaded here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Auction Button (Fixed) -->
+    <button id="quickStartAuctionBtn" class="btn btn-warning start-auction-btn d-none">
+        <i class="fas fa-gavel me-2"></i>Start Auction
+    </button>
+
+    <!-- Firebase & Other JS -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDw0owHOi0S3-4hada5X7SqrjmrzwRfk2s",
+            authDomain: "ipl-auction-4eed7.firebaseapp.com",
+             databaseURL: "https://ipl-auction-4eed7-default-rtdb.firebaseio.com",
+             projectId: "ipl-auction-4eed7",
+             storageBucket: "ipl-auction-4eed7.firebasestorage.app",
+             messagingSenderId: "541720840495",
+             appId: "1:541720840495:web:78477c8a77dc5f41a1f9da",
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const auth = firebase.auth();
+        const rtdb = firebase.database();
+
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                loadTeams();
+                loadPlayers();
+                loadUnsoldPlayersForAuction();
+                monitorAuctionStatus();
+            }
+        });
+
+        // Logout function
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // DOM Elements
+        const teamForm = document.getElementById('teamForm');
+        const playerForm = document.getElementById('playerForm');
+        const teamList = document.getElementById('teamList');
+        const playerTableBody = document.getElementById('playerTableBody');
+        const logoPreview = document.getElementById('logoPreview');
+        const playerImagePreview = document.getElementById('playerImagePreview');
+        const teamsCsv = document.getElementById('teamsCsv');
+        const playersCsv = document.getElementById('playersCsv');
+        const uploadTeamsBtn = document.getElementById('uploadTeamsBtn');
+        const uploadPlayersBtn = document.getElementById('uploadPlayersBtn');
+        const downloadTeamsSample = document.getElementById('downloadTeamsSample');
+        const downloadPlayersSample = document.getElementById('downloadPlayersSample');
+        const playerSelect = document.getElementById('playerSelect');
+        const startAuctionBtn = document.getElementById('startAuctionBtn');
+        const quickStartAuctionBtn = document.getElementById('quickStartAuctionBtn');
+
+        // Image Preview Handlers
+        document.getElementById('teamLogo').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    logoPreview.src = event.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        document.getElementById('playerImage').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    playerImagePreview.src = event.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Add Team
+        teamForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('teamName').value;
+            const code = document.getElementById('teamCode').value.toUpperCase();
+            const budget = document.getElementById('teamBudget').value;
+            const logoFile = document.getElementById('teamLogo').files[0];
+            
+            try {
+                let logoUrl = 'https://via.placeholder.com/100';
+                
+                // Upload logo if selected
+                if (logoFile) {
+                    const storageRef = storage.ref(`team_logos/${code}_${Date.now()}`);
+                    const snapshot = await storageRef.put(logoFile);
+                    logoUrl = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Add team to Firestore
+                await db.collection('teams').add({
+                    name,
+                    code,
+                    budget: parseFloat(budget),
+                    logoUrl,
+                    remainingBudget: parseFloat(budget),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('Team added successfully!');
+                teamForm.reset();
+                logoPreview.src = 'https://via.placeholder.com/100';
+                loadTeams();
+            } catch (error) {
+                console.error('Error adding team:', error);
+                alert('Error adding team. Please try again.');
+            }
+        });
+
+        // Add Player
+        playerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('playerName').value;
+            const role = document.getElementById('playerRole').value;
+            const price = document.getElementById('playerPrice').value;
+            const country = document.getElementById('playerCountry').value;
+            const imageFile = document.getElementById('playerImage').files[0];
+            
+            try {
+                let imageUrl = 'https://via.placeholder.com/150';
+                
+                // Upload image if selected
+                if (imageFile) {
+                    const storageRef = storage.ref(`player_images/${name.replace(/\s+/g, '_')}_${Date.now()}`);
+                    const snapshot = await storageRef.put(imageFile);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Add player to Firestore
+                await db.collection('players').add({
+                    name,
+                    role,
+                    price: parseFloat(price),
+                    country,
+                    imageUrl,
+                    status: 'unsold',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('Player added successfully!');
+                playerForm.reset();
+                playerImagePreview.src = 'https://via.placeholder.com/150';
+                loadPlayers();
+                loadUnsoldPlayersForAuction();
+            } catch (error) {
+                console.error('Error adding player:', error);
+                alert('Error adding player. Please try again.');
+            }
+        });
+
+        // Load Teams
+        async function loadTeams() {
+            try {
+                const snapshot = await db.collection('teams')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                teamList.innerHTML = '';
+                
+                snapshot.forEach(doc => {
+                    const team = doc.data();
+                    teamList.innerHTML += `
+                        <tr>
+                            <td><img src="${team.logoUrl}" class="team-logo-small"></td>
+                            <td>${team.name}</td>
+                            <td>${team.code}</td>
+                            <td>₹${team.budget.toFixed(2)} Cr</td>
+                            <td>₹${(team.remainingBudget || team.budget).toFixed(2)} Cr</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-2" onclick="editTeam('${doc.id}')">Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTeam('${doc.id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading teams:', error);
+            }
+        }
+
+        // Load Players
+        async function loadPlayers() {
+            try {
+                const snapshot = await db.collection('players')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                playerTableBody.innerHTML = '';
+                
+                snapshot.forEach(doc => {
+                    const player = doc.data();
+                    const statusClass = player.status === 'sold' ? 'status-sold' : 
+                                        player.status === 'auction' ? 'status-auction' : 'status-unsold';
+                    const statusText = player.status === 'sold' ? `SOLD to ${player.soldTo || 'Unknown'}` : 
+                                     player.status === 'auction' ? 'AUCTION' : 'UNSOLD';
+                    
+                    playerTableBody.innerHTML += `
+                        <tr>
+                            <td><img src="${player.imageUrl}" class="player-img-small"></td>
+                            <td>${player.name}</td>
+                            <td>${player.role}</td>
+                            <td>₹${player.price.toFixed(2)} Cr</td>
+                            <td>${player.country}</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-2" onclick="editPlayer('${doc.id}')">Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePlayer('${doc.id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading players:', error);
+            }
+        }
+
+        // Load unsold players for auction dropdown
+        async function loadUnsoldPlayersForAuction() {
+            try {
+                const snapshot = await db.collection('players')
+                    .where('status', '==', 'unsold')
+                    .orderBy('price', 'desc')
+                    .get();
+                
+                playerSelect.innerHTML = '<option value="">Select a player</option>';
+                
+                snapshot.forEach(doc => {
+                    const player = doc.data();
+                    playerSelect.innerHTML += `
+                        <option value="${doc.id}">${player.name} (${player.role}, ₹${player.price.toFixed(2)} Cr)</option>
+                    `;
+                });
+                
+                // Show/hide quick start button based on available players
+                quickStartAuctionBtn.classList.toggle('d-none', snapshot.empty);
+            } catch (error) {
+                console.error('Error loading unsold players:', error);
+            }
+        }
+
+        // Monitor auction status
+        function monitorAuctionStatus() {
+            rtdb.ref('auction/currentPlayer').on('value', snapshot => {
+                const player = snapshot.val();
+                const statusElement = document.getElementById('currentAuctionStatus');
+                
+                if (player) {
+                    statusElement.textContent = `Auction in progress for ${player.name}`;
+                    statusElement.className = 'alert alert-warning';
+                    
+                    // Update current player card
+                    document.getElementById('currentAuctionPlayerName').textContent = player.name;
+                    document.getElementById('currentAuctionPlayerImage').src = player.imageUrl || 'https://via.placeholder.com/150';
+                    document.getElementById('currentAuctionPlayerRole').textContent = player.role;
+                    document.getElementById('currentAuctionPlayerCountry').textContent = player.country;
+                    document.getElementById('currentAuctionPlayerPrice').textContent = (player.basePrice / 10000000).toFixed(2);
+                    
+                    // Show quick start button as "Auction in Progress"
+                    quickStartAuctionBtn.innerHTML = '<i class="fas fa-gavel me-2"></i>Auction in Progress';
+                    quickStartAuctionBtn.classList.remove('btn-warning');
+                    quickStartAuctionBtn.classList.add('btn-danger');
+                } else {
+                    statusElement.textContent = 'No active auction';
+                    statusElement.className = 'alert alert-info';
+                    
+                    // Reset current player card
+                    document.getElementById('currentAuctionPlayerName').textContent = 'No player selected';
+                    document.getElementById('currentAuctionPlayerImage').src = 'https://via.placeholder.com/150';
+                    document.getElementById('currentAuctionPlayerRole').textContent = 'Role';
+                    document.getElementById('currentAuctionPlayerCountry').textContent = 'Country';
+                    document.getElementById('currentAuctionPlayerPrice').textContent = '0.00';
+                    document.getElementById('currentAuctionPlayerBid').textContent = '0.00';
+                    document.getElementById('currentAuctionPlayerBidder').textContent = 'None';
+                    
+                    // Show quick start button as "Start Auction"
+                    quickStartAuctionBtn.innerHTML = '<i class="fas fa-gavel me-2"></i>Start Auction';
+                    quickStartAuctionBtn.classList.remove('btn-danger');
+                    quickStartAuctionBtn.classList.add('btn-warning');
+                }
+            });
+            
+            // Monitor current bid
+            rtdb.ref('auction/currentBid').on('value', snapshot => {
+                const bid = snapshot.val();
+                if (bid) {
+                    document.getElementById('currentAuctionPlayerBid').textContent = (bid.highestBid / 10000000).toFixed(2);
+                    document.getElementById('currentAuctionPlayerBidder').textContent = bid.highestBidder;
+                }
+            });
+            
+            // Monitor bid history
+            rtdb.ref('auction/bidHistory').limitToLast(10).on('value', snapshot => {
+                const bidHistoryTable = document.querySelector('#adminBidHistory tbody');
+                bidHistoryTable.innerHTML = '';
+                
+                const bids = [];
+                snapshot.forEach(childSnapshot => {
+                    bids.push(childSnapshot.val());
+                });
+                
+                // Sort by timestamp (newest first)
+                bids.sort((a, b) => b.timestamp - a.timestamp);
+                
+                bids.forEach(bid => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(bid.timestamp).toLocaleTimeString()}</td>
+                        <td>${bid.team}</td>
+                        <td>₹${(bid.amount / 10000000).toFixed(2)} Cr</td>
+                    `;
+                    bidHistoryTable.appendChild(row);
+                });
+            });
+        }
+
+        // Start auction for selected player
+        startAuctionBtn.addEventListener('click', async () => {
+            const playerId = playerSelect.value;
+            if (!playerId) {
+                alert('Please select a player first');
+                return;
+            }
+            
+            try {
+                const doc = await db.collection('players').doc(playerId).get();
+                if (doc.exists) {
+                    const player = doc.data();
+                    
+                    // Update player status to "auction"
+                    await doc.ref.update({ status: 'auction' });
+                    
+                    // Start auction in Realtime DB
+                    await rtdb.ref('auction').set({
+                        currentPlayer: {
+                            id: doc.id,
+                            name: player.name,
+                            role: player.role,
+                            country: player.country,
+                            imageUrl: player.imageUrl,
+                            basePrice: player.price * 10000000,
+                            highestBid: player.price * 10000000,
+                            highestBidder: "No bids yet",
+                            status: "auction"
+                        },
+                        currentBid: {
+                            highestBid: player.price * 10000000,
+                            highestBidder: "No bids yet"
+                        }
+                    });
+                    
+                    alert(`Auction started for ${player.name}`);
+                    loadPlayers();
+                } else {
+                    alert('Player not found!');
+                }
+            } catch (error) {
+                console.error('Error starting auction:', error);
+                alert('Error starting auction. Please try again.');
+            }
+        });
+
+        // Quick start auction button
+        quickStartAuctionBtn.addEventListener('click', () => {
+            // Switch to live auction tab
+            const liveAuctionTab = document.querySelector('[href="#live-auction"]');
+            const tabInstance = new bootstrap.Tab(liveAuctionTab);
+            tabInstance.show();
+            
+            // Focus on player select
+            playerSelect.focus();
+        });
+
+        // Delete Team
+        async function deleteTeam(teamId) {
+            if (confirm('Are you sure you want to delete this team?')) {
+                try {
+                    await db.collection('teams').doc(teamId).delete();
+                    loadTeams();
+                } catch (error) {
+                    console.error('Error deleting team:', error);
+                    alert('Error deleting team. Please try again.');
+                }
+            }
+        }
+
+        // Delete Player
+        async function deletePlayer(playerId) {
+            if (confirm('Are you sure you want to delete this player?')) {
+                try {
+                    await db.collection('players').doc(playerId).delete();
+                    loadPlayers();
+                    loadUnsoldPlayersForAuction();
+                } catch (error) {
+                    console.error('Error deleting player:', error);
+                    alert('Error deleting player. Please try again.');
+                }
+            }
+        }
+
+        // Edit Team (placeholder)
+        function editTeam(teamId) {
+            alert('Edit functionality will be implemented here\nTeam ID: ' + teamId);
+        }
+
+        // Edit Player (placeholder)
+        function editPlayer(playerId) {
+            alert('Edit functionality will be implemented here\nPlayer ID: ' + playerId);
+        }
+
+        // Bulk Upload Teams
+        uploadTeamsBtn.addEventListener('click', async () => {
+            if (!teamsCsv.files[0]) {
+                alert('Please select a CSV file first');
+                return;
+            }
+
+            try {
+                const file = teamsCsv.files[0];
+                const text = await file.text();
+                const results = Papa.parse(text, {
+                    header: true,
+                    skipEmptyLines: true
+                });
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const row of results.data) {
+                    try {
+                        if (!row.Name || !row.Code || !row.Budget) {
+                            errorCount++;
+                            continue;
+                        }
+                        
+                        await db.collection('teams').add({
+                            name: row.Name,
+                            code: row.Code.toUpperCase(),
+                            budget: parseFloat(row.Budget),
+                            logoUrl: row.LogoURL || 'https://via.placeholder.com/100',
+                            remainingBudget: parseFloat(row.Budget),
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Error adding team ${row.Name}:`, error);
+                        errorCount++;
+                    }
+                }
+                
+                alert(`Bulk upload complete!\nSuccess: ${successCount}\nErrors: ${errorCount}`);
+                teamsCsv.value = '';
+                loadTeams();
+            } catch (error) {
+                console.error('Error processing teams CSV:', error);
+                alert('Error processing CSV file. Please check the format.');
+            }
+        });
+
+        // Bulk Upload Players
+        uploadPlayersBtn.addEventListener('click', async () => {
+            if (!playersCsv.files[0]) {
+                alert('Please select a CSV file first');
+                return;
+            }
+
+            try {
+                const file = playersCsv.files[0];
+                const text = await file.text();
+                const results = Papa.parse(text, {
+                    header: true,
+                    skipEmptyLines: true
+                });
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const row of results.data) {
+                    try {
+                        if (!row.Name || !row.Role || !row.Price) {
+                            errorCount++;
+                            continue;
+                        }
+                        
+                        await db.collection('players').add({
+                            name: row.Name,
+                            role: row.Role.toLowerCase(),
+                            price: parseFloat(row.Price),
+                            country: row.Country || 'India',
+                            imageUrl: row.ImageURL || 'https://via.placeholder.com/150',
+                            status: 'unsold',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Error adding player ${row.Name}:`, error);
+                        errorCount++;
+                    }
+                }
+                
+                alert(`Bulk upload complete!\nSuccess: ${successCount}\nErrors: ${errorCount}`);
+                playersCsv.value = '';
+                loadPlayers();
+                loadUnsoldPlayersForAuction();
+            } catch (error) {
+                console.error('Error processing players CSV:', error);
+                alert('Error processing CSV file. Please check the format.');
+            }
+        });
+
+        // Download Sample Teams CSV
+        downloadTeamsSample.addEventListener('click', () => {
+            const csvContent = "data:text/csv;charset=utf-8,Name,Code,Budget,LogoURL\n" +
+                "Royal Challengers Bangalore,RCB,80,https://i.imgur.com/RCB_logo.png\n" +
+                "Mumbai Indians,MI,85,https://i.imgur.com/MI_logo.png\n" +
+                "Chennai Super Kings,CSK,75,https://i.imgur.com/CSK_logo.png";
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "teams_sample.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Download Sample Players CSV
+        downloadPlayersSample.addEventListener('click', () => {
+            const csvContent = "data:text/csv;charset=utf-8,Name,Role,Price,Country,ImageURL\n" +
+                "Virat Kohli,batsman,2,India,https://i.imgur.com/virat.png\n" +
+                "Jasprit Bumrah,bowler,1.5,India,https://i.imgur.com/bumrah.png\n" +
+                "Ben Stokes,all-rounder,1.8,England,https://i.imgur.com/stokes.png";
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "players_sample.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Initialize
+        if (auth.currentUser) {
+            loadTeams();
+            loadPlayers();
+            loadUnsoldPlayersForAuction();
+            monitorAuctionStatus();
+        }
+    </script>
+</body>
+</html>
