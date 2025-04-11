@@ -90,8 +90,11 @@
         </div>
     </div>
 
-    <script type="module" src="./src/firebase.js"></script>
-    <script type="module" src="./src/app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <!-- Remove type="module" and use classic scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="./src/firebase.js"></script> <!-- Update this file (see below) -->
 </body>
 </html>
