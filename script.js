@@ -9,8 +9,17 @@ const firebaseConfig = {
   appId: process.env.FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Debugging Firebase configuration
+console.log("Firebase Configuration:", firebaseConfig);
+
+// Firebase initialization
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase initialized successfully");
+} catch (error) {
+    console.error("Error initializing Firebase:", error);
+}
+
 const db = firebase.firestore();
 const rtdb = firebase.database();
 
